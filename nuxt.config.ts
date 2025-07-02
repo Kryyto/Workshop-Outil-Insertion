@@ -2,7 +2,6 @@
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
-  compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   css: ["~/assets/css/main.css"],
   vite: {
@@ -10,7 +9,10 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-  modules: ['@nuxt/eslint', '@nuxt/ui'],
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@pinia/nuxt'],
+  imports: {
+    dirs: ['stores']
+  },
   runtimeConfig: {
     public: {
       openaiApiKey: process.env.NUXT_PUBLIC_OPENAI_API_KEY || ''
