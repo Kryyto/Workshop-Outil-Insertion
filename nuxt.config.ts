@@ -10,5 +10,10 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-  modules: ['@nuxt/eslint', '@nuxt/ui']
+  modules: ['@nuxt/eslint', '@nuxt/ui'],
+  runtimeConfig: {
+    public: {
+      openaiApiKey: process.env.NUXT_PUBLIC_OPENAI_API_KEY || ''
+    }
+  }
 })
