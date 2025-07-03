@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "question": "Quelle est la capitale de la France ?",
+    "options": ["Berlin", "Londres", "Paris", "Madrid"],
+    "correctAnswer": 2,
+    "difficulty": 1,
+    "category": "Géographie"
+  },
+  {
+    "id": 2,
+    "question": "Combien font 2 + 2 ?",
+    "options": ["3", "4", "5", "6"],
+    "correctAnswer": 1,
+    "difficulty": 1,
+    "category": "Mathématiques"
+  },
+  {
+    "id": 3,
+    "question": "Quelle couleur obtient-on en mélangeant le bleu et le jaune ?",
+    "options": ["Rouge", "Orange", "Vert", "Violet"],
+    "correctAnswer": 2,
+    "difficulty": 1,
+    "category": "Sciences"
+  },
+  {
+    "id": 13,
+    "question": "Quel est le théorème qui stipule qu'il n'existe pas d'ensemble de tous les ensembles ?",
+    "options": ["Théorème de Gödel", "Paradoxe de Russell", "Théorème de Cantor", "Axiome de Zermelo"],
+    "correctAnswer": 1,
+    "difficulty": 5,
+    "category": "Mathématiques"
+  }
+]
