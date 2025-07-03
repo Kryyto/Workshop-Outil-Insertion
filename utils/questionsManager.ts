@@ -24,6 +24,28 @@ export function saveQuestionsToStorage(questions: Question[]): void {
   localStorage.setItem('questions', JSON.stringify(questions))
 }
 
+// Fonction pour sauvegarder les questions dans le fichier JSON via l'API
+export async function saveQuestionsToFile(questions: Question[]): Promise<boolean> {
+  try {
+    const response = await fetch('/api/questions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ questions })
+    })
+    
+    if (!response.ok) {
+      throw new Error('Erreur lors de la sauvegarde')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde dans le fichier:', error)
+    return false
+  }
+}
+
 // Fonction pour charger les questions depuis le localStorage
 export function loadQuestionsFromStorage(): Question[] {
   try {

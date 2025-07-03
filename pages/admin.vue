@@ -63,9 +63,11 @@
           
           <div class="form-group">
             <label>Catégorie :</label>
-            <select v-model="filterCategory">
-              <option value="">Toutes les catégories</option>
-              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            <select v-model="currentQuestion.category" required>
+              <option value="">Sélectionner une catégorie</option>
+              <option value="Anglais">Anglais</option>
+              <option value="Français">Français</option>
+              <option value="Informatique">Informatique</option>
             </select>
           </div>
           
@@ -138,6 +140,7 @@ import {
   loadQuestionsFromFile, 
   loadQuestionsFromStorage, 
   saveQuestionsToStorage,
+  saveQuestionsToFile,
   addQuestion,
   updateQuestion,
   deleteQuestion,
@@ -208,7 +211,7 @@ const loadFromFile = async () => {
   }
 }
 
-const saveQuestion = () => {
+const saveQuestion = async () => {
   formErrors.value = validateQuestion(currentQuestion.value)
   
   if (formErrors.value.length > 0) {
@@ -224,7 +227,17 @@ const saveQuestion = () => {
     questions.value = addQuestion(questions.value, currentQuestion.value as Omit<Question, 'id'>)
   }
   
-  saveQuestionsToStorage(questions.value)
+  // Sauvegarder dans le fichier JSON
+  const success = await saveQuestionsToFile(questions.value)
+  if (success) {
+    // Aussi sauvegarder dans localStorage comme backup
+    saveQuestionsToStorage(questions.value)
+    alert('Question sauvegardée avec succès !')
+  } else {
+    alert('Erreur lors de la sauvegarde. La question a été sauvegardée localement.')
+    saveQuestionsToStorage(questions.value)
+  }
+  
   cancelForm()
 }
 
@@ -234,10 +247,19 @@ const editQuestion = (question: Question) => {
   showAddForm.value = false
 }
 
-const deleteQuestionConfirm = (question: Question) => {
+const deleteQuestionConfirm = async (question: Question) => {
   if (confirm(`Êtes-vous sûr de vouloir supprimer la question "${question.question}" ?`)) {
     questions.value = deleteQuestion(questions.value, question.id)
-    saveQuestionsToStorage(questions.value)
+    
+    // Sauvegarder dans le fichier JSON
+    const success = await saveQuestionsToFile(questions.value)
+    if (success) {
+      saveQuestionsToStorage(questions.value)
+      alert('Question supprimée avec succès !')
+    } else {
+      alert('Erreur lors de la sauvegarde. La question a été supprimée localement.')
+      saveQuestionsToStorage(questions.value)
+    }
   }
 }
 
