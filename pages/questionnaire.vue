@@ -1,91 +1,185 @@
 <template>
-  <div>
-    <UCard class="max-w-3xl mx-auto">
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h1 class="text-xl font-bold">Questionnaire d'évaluation</h1>
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Score Elo actuel:</span>
-            <UBadge color="blue" variant="soft" size="lg">{{ currentElo }}</UBadge>
-          </div>
-        </div>
-      </template>
-      
-      <div v-if="!isFinished" class="space-y-6 py-4">
-        <div class="flex justify-between items-center">
-          <UBadge color="green" variant="soft">
-            Niveau {{ currentQuestion?.difficulty || 1 }}
-          </UBadge>
-          <span class="text-sm text-gray-500">Question {{ currentQuestionIndex + 1 }}/{{ totalQuestions }}</span>
-        </div>
-        
-        <div class="py-2">
-          <h2 class="text-lg font-medium mb-4">{{ currentQuestion?.question }}</h2>
-          
-          <div class="space-y-3">
-            <div v-for="(option, index) in currentQuestion?.options" 
-                 :key="index"
-                 class="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                 @click="handleOptionClick(index)">
-              <div class="flex items-center">
-                <div class="w-5 h-5 mr-3 rounded-full border border-gray-300 flex items-center justify-center">
-                  <div v-if="selectedAnswer === index" class="w-3 h-3 rounded-full bg-blue-500"></div>
-                </div>
-                <span>{{ option }}</span>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 mb-6">
+        <div class="px-8 py-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-semibold text-slate-800">Évaluation des Compétences</h1>
+              <p class="text-slate-600 mt-1">Questionnaire de positionnement professionnel</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <div class="text-right">
+                <div class="text-sm text-slate-500 font-medium">Score actuel</div>
+                <div class="text-2xl font-bold text-blue-600">{{ currentElo }}</div>
+              </div>
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <div v-else class="space-y-6 py-4">
-        <div class="border-t border-b py-4 text-center">
-          <h2>Évaluation terminée</h2>
-        </div>
-        
-        <div class="text-center">
-          <h2 class="text-xl font-bold mb-2">Votre score final</h2>
-          <UBadge color="blue" variant="solid" size="xl" class="text-2xl py-2 px-4">{{ currentElo }}</UBadge>
-          
-          <div class="mt-6 text-left">
-            <h3 class="font-medium mb-2">Interprétation de votre score:</h3>
-            <ul class="list-disc pl-5 space-y-2">
-              <li v-if="currentElo < 800" class="text-sm">
-                <span class="font-medium">Niveau débutant (moins de 800):</span> 
-                Des connaissances de base en culture générale qui peuvent être renforcées.
-              </li>
-              <li v-if="currentElo >= 800 && currentElo < 1200" class="text-sm">
-                <span class="font-medium">Niveau intermédiaire (800-1200):</span> 
-                Bonnes connaissances générales avec quelques domaines à approfondir.
-              </li>
-              <li v-if="currentElo >= 1200 && currentElo < 1600" class="text-sm">
-                <span class="font-medium">Niveau avancé (1200-1600):</span> 
-                Excellentes connaissances générales, avec une bonne maîtrise de sujets variés.
-              </li>
-              <li v-if="currentElo >= 1600" class="text-sm">
-                <span class="font-medium">Niveau expert (1600+):</span> 
-                Connaissances approfondies dans de nombreux domaines de culture générale.
-              </li>
-            </ul>
+
+      <!-- Main Content Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+        <!-- Progress Bar -->
+        <div class="bg-slate-50 px-8 py-4 border-b border-slate-200">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-slate-700">
+              Question {{ currentQuestionIndex + 1 }} sur 5
+            </span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs text-slate-500">Niveau</span>
+              <div class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                {{ currentQuestion?.difficulty || 1 }}
+              </div>
+            </div>
           </div>
-          
-          <div class="mt-8">
-            <h3 class="font-medium mb-4 text-left">Récapitulatif de vos réponses:</h3>
-            <div v-for="(answer, index) in answeredQuestions" :key="index" class="mb-4 border rounded-lg p-4 text-left">
-              <div class="font-medium">Question {{ index + 1 }}:</div>
-              <div class="ml-4 mb-2">{{ getQuestionText(answer.questionId) }}</div>
-              
-              <div class="ml-4">
+          <div class="w-full bg-slate-200 rounded-full h-2">
+            <div
+                class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-500 ease-out"
+                :style="{ width: `${((currentQuestionIndex + 1) / 5) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Question Section -->
+        <div v-if="!isFinished" class="px-8 py-8">
+          <div class="mb-8">
+            <h2 class="text-xl font-medium text-slate-800 leading-relaxed">
+              {{ currentQuestion?.question }}
+            </h2>
+          </div>
+
+          <div class="space-y-3">
+            <div
+                v-for="(option, index) in currentQuestion?.options"
+                :key="index"
+                class="group relative"
+                @click="handleOptionClick(index)"
+            >
+              <div
+                  class="p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md"
+                  :class="selectedAnswer === index
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'"
+              >
                 <div class="flex items-center">
-                  <span class="mr-2">Votre réponse:</span>
-                  <span :class="answer.correct ? 'text-green-600 font-medium' : 'text-red-600 font-medium'">
-                    {{ getAnswerText(answer.questionId, answer.selectedOption) }}
+                  <div class="flex-shrink-0 mr-4">
+                    <div
+                        class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                        :class="selectedAnswer === index
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-slate-300 group-hover:border-slate-400'"
+                    >
+                      <div
+                          v-if="selectedAnswer === index"
+                          class="w-2 h-2 rounded-full bg-white"
+                      ></div>
+                    </div>
+                  </div>
+                  <span
+                      class="text-slate-700 leading-relaxed"
+                      :class="selectedAnswer === index ? 'font-medium' : ''"
+                  >
+                    {{ option }}
                   </span>
                 </div>
-                
-                <div v-if="!answer.correct" class="flex items-center mt-1">
-                  <span class="mr-2">Bonne réponse:</span>
-                  <span class="text-green-600 font-medium">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div v-else class="px-8 py-8">
+          <!-- Final Score -->
+          <div class="text-center mb-8">
+            <div class="mb-4">
+              <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full mb-4">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold text-slate-800 mb-2">Évaluation terminée</h2>
+              <p class="text-slate-600">Voici votre score final</p>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-500 to-emerald-500 text-white rounded-2xl p-6 inline-block">
+              <div class="text-4xl font-bold mb-1">{{ currentElo }}</div>
+              <div class="text-blue-100 text-sm">Points de compétence</div>
+            </div>
+          </div>
+
+          <!-- Score Interpretation -->
+          <div class="bg-slate-50 rounded-xl p-6 mb-8">
+            <h3 class="font-semibold text-slate-800 mb-4">Interprétation de votre score</h3>
+            <div class="space-y-3">
+              <div v-if="currentElo < 800" class="flex items-start space-x-3">
+                <div class="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <div class="font-medium text-slate-700">Niveau débutant (moins de 800)</div>
+                  <div class="text-sm text-slate-600">Des connaissances de base qui peuvent être renforcées par une formation adaptée.</div>
+                </div>
+              </div>
+              <div v-if="currentElo >= 800 && currentElo < 1200" class="flex items-start space-x-3">
+                <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <div class="font-medium text-slate-700">Niveau intermédiaire (800-1200)</div>
+                  <div class="text-sm text-slate-600">Bonnes bases avec quelques domaines à approfondir pour optimiser votre réinsertion.</div>
+                </div>
+              </div>
+              <div v-if="currentElo >= 1200 && currentElo < 1600" class="flex items-start space-x-3">
+                <div class="w-2 h-2 bg-emerald-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <div class="font-medium text-slate-700">Niveau avancé (1200-1600)</div>
+                  <div class="text-sm text-slate-600">Excellentes compétences, vous êtes prêt(e) pour des postes qualifiés.</div>
+                </div>
+              </div>
+              <div v-if="currentElo >= 1600" class="flex items-start space-x-3">
+                <div class="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <div class="font-medium text-slate-700">Niveau expert (1600+)</div>
+                  <div class="text-sm text-slate-600">Compétences approfondies, vous pouvez viser des postes à responsabilités.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Answers Summary -->
+          <div class="space-y-4">
+            <h3 class="font-semibold text-slate-800 mb-4">Récapitulatif de vos réponses</h3>
+            <div v-for="(answer, index) in answeredQuestions" :key="index" class="border border-slate-200 rounded-xl p-4">
+              <div class="mb-3">
+                <div class="text-sm font-medium text-slate-600 mb-1">Question {{ index + 1 }}</div>
+                <div class="text-slate-800">{{ getQuestionText(answer.questionId) }}</div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm text-slate-500">Votre réponse:</span>
+                  <span :class="answer.correct ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'">
+                    {{ getAnswerText(answer.questionId, answer.selectedOption) }}
+                  </span>
+                  <div v-if="answer.correct" class="w-4 h-4 text-emerald-500">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                  <div v-else class="w-4 h-4 text-red-500">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                <div v-if="!answer.correct" class="flex items-center space-x-2">
+                  <span class="text-sm text-slate-500">Bonne réponse:</span>
+                  <span class="text-emerald-600 font-medium">
                     {{ getCorrectAnswerText(answer.questionId) }}
                   </span>
                 </div>
@@ -93,25 +187,39 @@
             </div>
           </div>
         </div>
-      </div>
-      
-      <template #footer>
-        <div class="flex justify-end">
-          <UButton v-if="!isFinished" 
-                  @click="nextQuestion" 
-                  color="primary" 
-                  :disabled="selectedAnswer === null">
-            {{ isLastQuestion ? 'Terminer' : 'Suivant' }}
-          </UButton>
-          
-          <UButton v-else 
-                  to="/" 
-                  color="primary">
-            Retour à l'accueil
-          </UButton>
+
+        <!-- Footer -->
+        <div class="bg-slate-50 px-8 py-6 border-t border-slate-200">
+          <div class="flex justify-between items-center">
+            <div v-if="!isFinished" class="text-sm text-slate-500">
+              Sélectionnez une réponse pour continuer
+            </div>
+            <div v-else class="text-sm text-slate-500">
+              Votre évaluation a été sauvegardée
+            </div>
+
+            <div class="flex space-x-3">
+              <button
+                  v-if="!isFinished"
+                  @click="nextQuestion"
+                  :disabled="selectedAnswer === null"
+                  class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isLastQuestion ? 'Terminer l\'évaluation' : 'Question suivante' }}
+              </button>
+
+              <button
+                  v-else
+                  @click="$router.push('/')"
+                  class="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-medium transition-all duration-200 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200"
+              >
+                Retour à l'accueil
+              </button>
+            </div>
+          </div>
         </div>
-      </template>
-    </UCard>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -134,10 +242,11 @@ const answeredQuestions = ref<{questionId: number, correct: boolean, selectedOpt
 const isFinished = ref(false)
 
 // Calcul des propriétés
-const totalQuestions = computed(() => questionStore.totalQuestions)
+const NB_QUESTIONS_MAX = 5
+const totalQuestions = computed(() => Math.min(questionStore.totalQuestions, NB_QUESTIONS_MAX))
 const currentQuestion = computed(() => questionStore.getCurrentQuestion(currentQuestionIndex.value))
 const isFirstQuestion = computed(() => currentQuestionIndex.value === 0)
-const isLastQuestion = computed(() => currentQuestionIndex.value === totalQuestions.value - 1)
+const isLastQuestion = computed(() => currentQuestionIndex.value === NB_QUESTIONS_MAX - 1)
 const currentElo = computed(() => eloStore.currentElo)
 
 // Fonction pour gérer le clic sur une option
@@ -149,6 +258,11 @@ function handleOptionClick(index: number) {
 // Fonctions de navigation
 function nextQuestion() {
   if (selectedAnswer.value !== null && currentQuestion.value) {
+    // Arrêter à la 5ème question
+    if (currentQuestionIndex.value >= NB_QUESTIONS_MAX - 1) {
+      isFinished.value = true
+      return
+    }
     // Vérifier si la réponse est correcte
     const isCorrect = selectedAnswer.value === currentQuestion.value.correctAnswer
     console.log('Réponse correcte?', isCorrect)
@@ -164,9 +278,11 @@ function nextQuestion() {
     })
     
     // Passer à la question suivante ou terminer
-    if (isLastQuestion.value) {
+    if (totalQuestions.value >= 10) {
       isFinished.value = true
     } else {
+      // Ajouter dynamiquement la prochaine question selon la logique adaptative
+      questionStore.nextAdaptiveQuestion(isCorrect)
       currentQuestionIndex.value++
       selectedAnswer.value = null
     }

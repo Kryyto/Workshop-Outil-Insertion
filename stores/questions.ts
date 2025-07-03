@@ -14,6 +14,8 @@ export const useQuestionStore = defineStore('questions', {
   state: () => ({
     questions: [] as Question[],
     currentQuestions: [] as Question[],
+    currentDifficulty: 3, // Commence toujours à la difficulté moyenne
+    usedQuestionIds: [] as number[], // Pour éviter les doublons
   }),
 
   getters: {
@@ -38,128 +40,177 @@ export const useQuestionStore = defineStore('questions', {
         },
         {
           id: 2,
-          question: "Combien font 2 + 2 ?",
-          options: ["3", "4", "5", "6"],
-          correctAnswer: 1,
+          question: "Comment s'appelle le verbe à l'infinitif dans la phrase : 'Je mange une pomme' ?",
+          options: ["Manger", "Mange", "Mangeons", "Mangé"],
+          correctAnswer: 0,
           difficulty: 1,
-          category: "Mathématiques"
+          category: "Français"
         },
         {
           id: 3,
-          question: "Quelle couleur obtient-on en mélangeant le bleu et le jaune ?",
-          options: ["Rouge", "Orange", "Vert", "Violet"],
-          correctAnswer: 2,
+          question: "Which of these is a greeting in English?",
+          options: ["Hello", "Goodbye", "See you", "Thanks"],
+          correctAnswer: 0,
           difficulty: 1,
-          category: "Arts"
+          category: "Anglais"
         },
-        
+
         // Niveau 2 - Facile
         {
           id: 4,
-          question: "Quel est le plus grand océan du monde ?",
-          options: ["Atlantique", "Indien", "Arctique", "Pacifique"],
-          correctAnswer: 3,
+          question: "Quel est le synonyme du mot 'heureux' ?",
+          options: ["Triste", "Content", "Mécontent", "Fatigué"],
+          correctAnswer: 1,
           difficulty: 2,
-          category: "Géographie"
+          category: "Français"
         },
         {
           id: 5,
-          question: "Qui a peint La Joconde ?",
-          options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"],
-          correctAnswer: 2,
+          question: "What is the English translation of 'Je suis fatigué'?",
+          options: ["I am tired", "I am happy", "I am sad", "I am sick"],
+          correctAnswer: 0,
           difficulty: 2,
-          category: "Arts"
+          category: "Anglais"
         },
         {
           id: 6,
-          question: "En quelle année a commencé la Première Guerre mondiale ?",
-          options: ["1905", "1914", "1918", "1939"],
+          question: "Quel est le raccourci clavier pour copier dans un document ?",
+          options: ["Ctrl + P", "Ctrl + C", "Ctrl + V", "Ctrl + X"],
           correctAnswer: 1,
           difficulty: 2,
-          category: "Histoire"
+          category: "Informatique"
         },
-        
+
         // Niveau 3 - Moyen
         {
           id: 7,
-          question: "Quel est l'élément chimique dont le symbole est 'Fe' ?",
-          options: ["Fluor", "Fer", "Francium", "Fermium"],
+          question: "Quel est l'antonyme du mot 'dur' ?",
+          options: ["Solide", "Mou", "Rugueux", "Épais"],
           correctAnswer: 1,
           difficulty: 3,
-          category: "Sciences"
+          category: "Français"
         },
         {
           id: 8,
-          question: "Qui a écrit 'Les Misérables' ?",
-          options: ["Albert Camus", "Victor Hugo", "Émile Zola", "Gustave Flaubert"],
-          correctAnswer: 1,
+          question: "How do you say 'I love you' in French?",
+          options: ["Je t'aime", "Je suis content", "Je suis fatigué", "Je mange"],
+          correctAnswer: 0,
           difficulty: 3,
-          category: "Littérature"
+          category: "Anglais"
         },
         {
           id: 9,
-          question: "Quel pays a remporté le plus de Coupes du Monde de football ?",
-          options: ["Allemagne", "Italie", "Argentine", "Brésil"],
-          correctAnswer: 3,
+          question: "Dans Microsoft Word, quelle option utiliseriez-vous pour modifier la taille de la police ?",
+          options: ["Home", "Insert", "Page Layout", "Review"],
+          correctAnswer: 0,
           difficulty: 3,
-          category: "Sport"
+          category: "Informatique"
         },
-        
+
         // Niveau 4 - Difficile
         {
           id: 10,
-          question: "Quelle est la capitale de l'Australie ?",
-          options: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
-          correctAnswer: 2,
+          question: "What is the plural of 'child' in English?",
+          options: ["Children", "Childes", "Childer", "Childs"],
+          correctAnswer: 0,
           difficulty: 4,
-          category: "Géographie"
+          category: "Anglais"
         },
         {
           id: 11,
-          question: "Qui a formulé la théorie de la relativité ?",
-          options: ["Isaac Newton", "Albert Einstein", "Niels Bohr", "Marie Curie"],
-          correctAnswer: 1,
+          question: "Conjuguez le verbe 'avoir' au présent pour la 1ère personne du pluriel.",
+          options: ["Nous avons", "Nous avez", "Nous ont", "Nous avoir"],
+          correctAnswer: 0,
           difficulty: 4,
-          category: "Sciences"
+          category: "Français"
         },
         {
           id: 12,
-          question: "En quelle année a été signé le Traité de Versailles ?",
-          options: ["1914", "1918", "1919", "1945"],
+          question: "Quel est le raccourci clavier pour coller dans un document ?",
+          options: ["Ctrl + P", "Ctrl + C", "Ctrl + V", "Ctrl + X"],
           correctAnswer: 2,
           difficulty: 4,
-          category: "Histoire"
+          category: "Informatique"
         },
-        
+
         // Niveau 5 - Très difficile
         {
           id: 13,
-          question: "Quel est le théorème qui stipule qu'il n'existe pas d'ensemble de tous les ensembles ?",
-          options: ["Théorème de Gödel", "Paradoxe de Russell", "Théorème de Cantor", "Axiome de Zermelo"],
+          question: "Quelle est la fonction du subjonctif dans la phrase : 'Il faut que tu sois là' ?",
+          options: ["Exprimer un souhait", "Exprimer une obligation", "Exprimer une certitude", "Exprimer une réalité"],
           correctAnswer: 1,
           difficulty: 5,
-          category: "Mathématiques"
+          category: "Français"
         },
         {
           id: 14,
-          question: "Qui a composé l'opéra 'La Flûte enchantée' ?",
-          options: ["Ludwig van Beethoven", "Johann Sebastian Bach", "Wolfgang Amadeus Mozart", "Richard Wagner"],
+          question: "Which of these sentences is correct in English?",
+          options: ["He don't like pizza", "He doesn't likes pizza", "He doesn't like pizza", "He don't likes pizza"],
           correctAnswer: 2,
           difficulty: 5,
-          category: "Arts"
+          category: "Anglais"
         },
         {
           id: 15,
-          question: "Quel scientifique a découvert la pénicilline ?",
-          options: ["Louis Pasteur", "Alexander Fleming", "Robert Koch", "Joseph Lister"],
-          correctAnswer: 1,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
           difficulty: 5,
-          category: "Sciences"
-        }
+          category: "Informatique"
+        },
+        {
+          id: 16,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
+          difficulty: 5,
+          category: "Informatique"
+        },
+        {
+          id: 17,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
+          difficulty: 5,
+          category: "Informatique"
+        },
+        {
+          id: 18,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
+          difficulty: 5,
+          category: "Informatique"
+        },
+        {
+          id: 19,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
+          difficulty: 5,
+          category: "Informatique"
+        },
+        {
+          id: 20,
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+          correctAnswer: 0,
+          difficulty: 5,
+          category: "Informatique"
+        },
       ]
-      
-      // Sélectionner 10 questions aléatoires pour le questionnaire
-      this.selectRandomQuestions(10)
+
+      // Sélectionner 5 questions aléatoires pour le questionnaire
+      // Initialiser la difficulté et les questions utilisées
+      this.currentDifficulty = 3
+      this.usedQuestionIds = []
+      this.currentQuestions = []
+      // Sélectionner la première question de difficulté 3
+      const first = this.getRandomQuestionByDifficulty(3)
+      if (first) {
+        this.currentQuestions.push(first)
+        this.usedQuestionIds.push(first.id)
+      }
     },
     
     /**
@@ -174,7 +225,7 @@ export const useQuestionStore = defineStore('questions', {
       const shuffled = [...this.questions].sort(() => 0.5 - Math.random())
       
       // Sélectionner le nombre demandé
-      this.currentQuestions = shuffled.slice(0, maxCount)
+      this.currentQuestions = shuffled.slice(0, Math.min(5, maxCount))
     },
     
     /**
@@ -198,7 +249,7 @@ export const useQuestionStore = defineStore('questions', {
       if (filteredQuestions.length > 0) {
         // Remplacer les questions actuelles par celles adaptées au niveau
         const shuffled = [...filteredQuestions].sort(() => 0.5 - Math.random())
-        this.currentQuestions = shuffled.slice(0, 10)
+        this.currentQuestions = shuffled.slice(0, 5)
       }
     },
     
@@ -219,6 +270,43 @@ export const useQuestionStore = defineStore('questions', {
      */
     getQuestionById(id: number): Question | null {
       return this.questions.find((q: Question) => q.id === id) || null
+    },
+    
+    /**
+     * Sélectionne une question aléatoire d'une difficulté donnée, en évitant les doublons
+     */
+    getRandomQuestionByDifficulty(difficulty: number): Question | null {
+      const pool = this.questions.filter(
+        (q: Question) => q.difficulty === difficulty && !this.usedQuestionIds.includes(q.id)
+      )
+      if (pool.length === 0) return null
+      const idx = Math.floor(Math.random() * pool.length)
+      return pool[idx]
+    },
+
+    /**
+     * Ajoute dynamiquement la prochaine question selon la réponse du joueur
+     * @param wasCorrect true si la réponse était correcte
+     */
+    nextAdaptiveQuestion(wasCorrect: boolean) {
+      if (wasCorrect) {
+        this.currentDifficulty = Math.min(5, this.currentDifficulty + 1)
+      } else {
+        this.currentDifficulty = Math.max(1, this.currentDifficulty - 1)
+      }
+      let next = this.getRandomQuestionByDifficulty(this.currentDifficulty)
+      if (!next) {
+        for (let offset = 1; offset <= 2; offset++) {
+          next = this.getRandomQuestionByDifficulty(this.currentDifficulty + offset)
+          if (next) break
+          next = this.getRandomQuestionByDifficulty(this.currentDifficulty - offset)
+          if (next) break
+        }
+      }
+      if (next) {
+        this.currentQuestions.push(next)
+        this.usedQuestionIds.push(next.id)
+      }
     }
   }
 })
