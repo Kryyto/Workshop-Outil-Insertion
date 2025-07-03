@@ -31,7 +31,7 @@
         <div class="bg-slate-50 px-8 py-4 border-b border-slate-200">
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-medium text-slate-700">
-              Question {{ currentQuestionIndex + 1 }} sur 5
+              Question {{ currentQuestionIndex + 1 }} sur {{ NB_QUESTIONS_MAX }}
             </span>
             <div class="flex items-center space-x-2">
               <span class="text-xs text-slate-500">Niveau</span>
@@ -43,7 +43,7 @@
           <div class="w-full bg-slate-200 rounded-full h-2">
             <div
                 class="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-500 ease-out"
-                :style="{ width: `${((currentQuestionIndex + 1) / 5) * 100}%` }"
+                :style="{ width: `${((currentQuestionIndex + 1) / NB_QUESTIONS_MAX) * 100}%` }"
             ></div>
           </div>
         </div>
@@ -210,7 +210,7 @@
 
               <button
                   v-else
-                  @click="$router.push('/')"
+                  @click="goToHome"
                   class="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-medium transition-all duration-200 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-200"
               >
                 Retour à l'accueil
@@ -224,6 +224,10 @@
 </template>
 
 <script setup lang="ts">
+// Imports Nuxt
+import { useRouter } from 'vue-router'
+
+// Imports des types et stores
 import { useQuestionStore } from '~/stores/questions'
 import { useEloStore } from '~/stores/elo'
 
@@ -231,21 +235,32 @@ definePageMeta({
   title: 'Questionnaire'
 })
 
+// Router
+const router = useRouter()
+
 // Récupération des stores
 const questionStore = useQuestionStore()
 const eloStore = useEloStore()
+
+// Constantes
+const NB_QUESTIONS_MAX = 5
 
 // État local
 const currentQuestionIndex = ref(0)
 const selectedAnswer = ref<number | null>(null)
 const answeredQuestions = ref<{questionId: number, correct: boolean, selectedOption: number}[]>([])
 const isFinished = ref(false)
+const usedQuestionIds = ref<number[]>([])
 
 // Calcul des propriétés
-const NB_QUESTIONS_MAX = 5
-const totalQuestions = computed(() => Math.min(questionStore.totalQuestions, NB_QUESTIONS_MAX))
-const currentQuestion = computed(() => questionStore.getCurrentQuestion(currentQuestionIndex.value))
-const isFirstQuestion = computed(() => currentQuestionIndex.value === 0)
+const currentQuestion = computed(() => {
+  if (currentQuestionIndex.value < NB_QUESTIONS_MAX && usedQuestionIds.value.length > 0) {
+    const id = usedQuestionIds.value[currentQuestionIndex.value]
+    return questionStore.getQuestionById(id)
+  }
+  return null
+})
+
 const isLastQuestion = computed(() => currentQuestionIndex.value === NB_QUESTIONS_MAX - 1)
 const currentElo = computed(() => eloStore.currentElo)
 
@@ -255,39 +270,51 @@ function handleOptionClick(index: number) {
   console.log('Option sélectionnée:', index)
 }
 
+// Fonction pour aller à l'accueil
+function goToHome() {
+  router.push('/')
+}
+
 // Fonctions de navigation
 function nextQuestion() {
   if (selectedAnswer.value !== null && currentQuestion.value) {
-    // Arrêter à la 5ème question
-    if (currentQuestionIndex.value >= NB_QUESTIONS_MAX - 1) {
-      isFinished.value = true
-      return
-    }
     // Vérifier si la réponse est correcte
     const isCorrect = selectedAnswer.value === currentQuestion.value.correctAnswer
-    console.log('Réponse correcte?', isCorrect)
-    
-    // Mettre à jour le score Elo
-    eloStore.updateElo(currentQuestion.value.difficulty, isCorrect)
-    
+
     // Enregistrer la réponse
     answeredQuestions.value.push({
       questionId: currentQuestion.value.id,
       correct: isCorrect,
       selectedOption: selectedAnswer.value
     })
-    
-    // Passer à la question suivante ou terminer
-    if (totalQuestions.value >= 10) {
+
+    // Mettre à jour le score Elo
+    eloStore.updateElo(currentQuestion.value.difficulty, isCorrect)
+
+    // Si c'était la dernière question, terminer
+    if (currentQuestionIndex.value >= NB_QUESTIONS_MAX - 1) {
       isFinished.value = true
-    } else {
-      // Ajouter dynamiquement la prochaine question selon la logique adaptative
-      questionStore.nextAdaptiveQuestion(isCorrect)
-      currentQuestionIndex.value++
-      selectedAnswer.value = null
+      return
     }
+
+    // Passer à la question suivante
+    currentQuestionIndex.value++
+    selectedAnswer.value = null
   }
 }
+
+// Initialisation des questions et du score à la création du composant
+onMounted(() => {
+  // Initialiser le score Elo
+  eloStore.resetElo()
+
+  // Charger les questions
+  questionStore.loadQuestions()
+
+  // Mélanger et sélectionner les questions uniques dès le début
+  const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
+  usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q: Question) => q.id)
+})
 
 // Fonctions pour le récapitulatif des réponses
 function getQuestionText(questionId: number): string {
@@ -304,13 +331,4 @@ function getCorrectAnswerText(questionId: number): string {
   const question = questionStore.getQuestionById(questionId)
   return question ? question.options[question.correctAnswer] : ''
 }
-
-// Initialisation
-onMounted(() => {
-  // Initialiser le score Elo
-  eloStore.resetElo()
-  
-  // Charger les questions et sélectionner la première en fonction du niveau Elo initial
-  questionStore.loadQuestions()
-})
 </script>

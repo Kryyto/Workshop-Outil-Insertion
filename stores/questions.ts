@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 // Type pour les questions
-interface Question {
+export interface Question {
   id: number
   question: string
   options: string[]
@@ -160,43 +160,43 @@ export const useQuestionStore = defineStore('questions', {
         },
         {
           id: 16,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour calculer la moyenne d'une plage de cellules?",
           options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
+          correctAnswer: 1,
           difficulty: 5,
           category: "Informatique"
         },
         {
           id: 17,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour compter le nombre de cellules non vides?",
           options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
+          correctAnswer: 2,
           difficulty: 5,
           category: "Informatique"
         },
         {
           id: 18,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+          question: "Dans Excel, quelle fonction utiliseriez-vous pour rechercher une valeur dans un tableau?",
           options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
+          correctAnswer: 3,
           difficulty: 5,
           category: "Informatique"
         },
         {
           id: 19,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
+          question: "Quel est le complément d'objet direct dans la phrase : 'Marie mange une pomme' ?",
+          options: ["Marie", "mange", "une pomme", "Il n'y en a pas"],
+          correctAnswer: 2,
           difficulty: 5,
-          category: "Informatique"
+          category: "Français"
         },
         {
           id: 20,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
+          question: "What is the past participle of 'to write' in English?",
+          options: ["Wrote", "Written", "Writing", "Writes"],
+          correctAnswer: 1,
           difficulty: 5,
-          category: "Informatique"
+          category: "Anglais"
         },
       ]
 
@@ -212,7 +212,7 @@ export const useQuestionStore = defineStore('questions', {
         this.usedQuestionIds.push(first.id)
       }
     },
-    
+
     /**
      * Sélectionne un nombre spécifique de questions aléatoires
      * @param count Nombre de questions à sélectionner
@@ -220,14 +220,14 @@ export const useQuestionStore = defineStore('questions', {
     selectRandomQuestions(count: number) {
       // S'assurer qu'on ne demande pas plus de questions qu'il n'en existe
       const maxCount = Math.min(count, this.questions.length)
-      
+
       // Copier et mélanger les questions
       const shuffled = [...this.questions].sort(() => 0.5 - Math.random())
-      
+
       // Sélectionner le nombre demandé
       this.currentQuestions = shuffled.slice(0, Math.min(5, maxCount))
     },
-    
+
     /**
      * Sélectionne des questions adaptées au niveau Elo actuel
      * @param elo Score Elo actuel
@@ -236,23 +236,23 @@ export const useQuestionStore = defineStore('questions', {
       // Convertir l'Elo en niveau de difficulté cible
       // 400-800 = niveau 1, 800-1200 = niveau 2, etc.
       let targetDifficulty = Math.floor((elo - 400) / 400) + 1
-      
+
       // Limiter entre 1 et 5
       targetDifficulty = Math.max(1, Math.min(5, targetDifficulty))
-      
+
       // Sélectionner des questions proches du niveau cible
       // 60% du niveau cible, 20% un niveau en-dessous, 20% un niveau au-dessus
       const filteredQuestions = this.questions.filter((q: Question) => {
         return Math.abs(q.difficulty - targetDifficulty) <= 1
       })
-      
+
       if (filteredQuestions.length > 0) {
         // Remplacer les questions actuelles par celles adaptées au niveau
         const shuffled = [...filteredQuestions].sort(() => 0.5 - Math.random())
         this.currentQuestions = shuffled.slice(0, 5)
       }
     },
-    
+
     /**
      * Récupère la question à l'index spécifié
      * @param index Index de la question
@@ -263,7 +263,7 @@ export const useQuestionStore = defineStore('questions', {
       }
       return null
     },
-    
+
     /**
      * Récupère une question par son ID
      * @param id ID de la question
@@ -271,13 +271,13 @@ export const useQuestionStore = defineStore('questions', {
     getQuestionById(id: number): Question | null {
       return this.questions.find((q: Question) => q.id === id) || null
     },
-    
+
     /**
      * Sélectionne une question aléatoire d'une difficulté donnée, en évitant les doublons
      */
     getRandomQuestionByDifficulty(difficulty: number): Question | null {
       const pool = this.questions.filter(
-        (q: Question) => q.difficulty === difficulty && !this.usedQuestionIds.includes(q.id)
+          (q: Question) => q.difficulty === difficulty && !this.usedQuestionIds.includes(q.id)
       )
       if (pool.length === 0) return null
       const idx = Math.floor(Math.random() * pool.length)
