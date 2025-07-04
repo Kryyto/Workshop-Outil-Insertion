@@ -311,7 +311,7 @@ const eloStore = useEloStore()
 const xapiStore = useXApiStore() // xAPI store for tracking learning activities
 
 // Constantes
-const NB_QUESTIONS_MAX = 5
+const NB_QUESTIONS_MAX = 10
 
 // Référence au composant AICorrection
 const aiCorrectionRef = ref<{ correctText: (question: string, answer: string) => Promise<number> } | null>(null);
