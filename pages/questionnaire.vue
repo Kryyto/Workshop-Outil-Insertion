@@ -150,6 +150,25 @@
             </div>
           </div>
 
+          <!-- xAPI Data Section -->
+          <div class="bg-slate-50 rounded-xl p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-slate-800">Données xAPI (format H5P)</h3>
+              <button
+                @click="downloadXapiData"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition-all duration-200 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200"
+              >
+                Télécharger les données
+              </button>
+            </div>
+            <p class="text-sm text-slate-600 mb-2">
+              Les résultats de votre évaluation sont disponibles au format xAPI, compatible avec les systèmes LMS et H5P.
+            </p>
+            <div class="text-xs text-slate-500">
+              Ces données sont également sauvegardées localement dans votre navigateur.
+            </div>
+          </div>
+          
           <!-- Answers Summary -->
           <div class="space-y-4">
             <h3 class="font-semibold text-slate-800 mb-4">Récapitulatif de vos réponses</h3>
@@ -230,6 +249,7 @@ import { useRouter } from 'vue-router'
 // Imports des types et stores
 import { useQuestionStore } from '~/stores/questions'
 import { useEloStore } from '~/stores/elo'
+import { useXApiStore } from '~/stores/xapi'
 
 definePageMeta({
   title: 'Questionnaire'
@@ -241,6 +261,7 @@ const router = useRouter()
 // Récupération des stores
 const questionStore = useQuestionStore()
 const eloStore = useEloStore()
+const xapiStore = useXApiStore()
 
 // Constantes
 const NB_QUESTIONS_MAX = 5
@@ -250,6 +271,8 @@ const currentQuestionIndex = ref(0)
 const selectedAnswer = ref<number | null>(null)
 const answeredQuestions = ref<{questionId: number, correct: boolean, selectedOption: number}[]>([])
 const isFinished = ref(false)
+const xapiData = ref<string>('')
+const showXapiData = ref(false)
 const usedQuestionIds = ref<number[]>([])
 
 // Calcul des propriétés
@@ -263,6 +286,7 @@ const currentQuestion = computed(() => {
 
 const isLastQuestion = computed(() => currentQuestionIndex.value === NB_QUESTIONS_MAX - 1)
 const currentElo = computed(() => eloStore.currentElo)
+const correctAnswersCount = computed(() => answeredQuestions.value.filter((a: {correct: boolean}) => a.correct).length)
 
 // Fonction pour gérer le clic sur une option
 function handleOptionClick(index: number) {
@@ -270,51 +294,57 @@ function handleOptionClick(index: number) {
   console.log('Option sélectionnée:', index)
 }
 
-// Fonction pour aller à l'accueil
-function goToHome() {
-  router.push('/')
-}
-
 // Fonctions de navigation
 function nextQuestion() {
   if (selectedAnswer.value !== null && currentQuestion.value) {
+    const question = currentQuestion.value
     // Vérifier si la réponse est correcte
-    const isCorrect = selectedAnswer.value === currentQuestion.value.correctAnswer
-
+    const isCorrect = selectedAnswer.value === question.correctAnswer
+    console.log('Réponse correcte?', isCorrect)
+    
+    // Mettre à jour le score Elo
+    eloStore.updateElo(question.difficulty, isCorrect)
+    
     // Enregistrer la réponse
     answeredQuestions.value.push({
-      questionId: currentQuestion.value.id,
+      questionId: question.id,
       correct: isCorrect,
       selectedOption: selectedAnswer.value
     })
-
-    // Mettre à jour le score Elo
-    eloStore.updateElo(currentQuestion.value.difficulty, isCorrect)
-
-    // Si c'était la dernière question, terminer
-    if (currentQuestionIndex.value >= NB_QUESTIONS_MAX - 1) {
+    
+    // Enregistrer la réponse au format xAPI
+    xapiStore.answeredQuestion(
+      question.id,
+      question.question,
+      selectedAnswer.value,
+      question.options[selectedAnswer.value],
+      question.correctAnswer,
+      question.options[question.correctAnswer],
+      isCorrect,
+      question.difficulty
+    )
+    
+    // Passer à la question suivante ou terminer
+    if (isLastQuestion.value) {
       isFinished.value = true
-      return
+      // Enregistrer la fin de l'évaluation au format xAPI
+      xapiStore.completedAssessment(
+        currentElo.value,
+        answeredQuestions.value.length,
+        correctAnswersCount.value
+      )
+      
+      // Sauvegarder les données xAPI dans le localStorage
+      xapiStore.saveToLocalStorage()
+      
+      // Préparer les données xAPI pour l'affichage
+      xapiData.value = xapiStore.exportStatements()
+    } else {
+      currentQuestionIndex.value++
+      selectedAnswer.value = null
     }
-
-    // Passer à la question suivante
-    currentQuestionIndex.value++
-    selectedAnswer.value = null
   }
 }
-
-// Initialisation des questions et du score à la création du composant
-onMounted(() => {
-  // Initialiser le score Elo
-  eloStore.resetElo()
-
-  // Charger les questions
-  questionStore.loadQuestions()
-
-  // Mélanger et sélectionner les questions uniques dès le début
-  const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
-  usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q: Question) => q.id)
-})
 
 // Fonctions pour le récapitulatif des réponses
 function getQuestionText(questionId: number): string {
@@ -331,4 +361,39 @@ function getCorrectAnswerText(questionId: number): string {
   const question = questionStore.getQuestionById(questionId)
   return question ? question.options[question.correctAnswer] : ''
 }
+
+function toggleXapiData() {
+  showXapiData.value = !showXapiData.value
+}
+
+function downloadXapiData() {
+  if (process.client) {
+    const blob = new Blob([xapiData.value], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `elo-assessment-xapi-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+}
+
+// Initialisation
+onMounted(() => {
+  // Initialiser le score Elo
+  eloStore.resetElo()
+  
+  // Charger les questions
+  questionStore.loadQuestions()
+  
+  // Mélanger et sélectionner les questions uniques dès le début
+  const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
+  usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q: Question) => q.id)
+  
+  // Initialiser le store xAPI et enregistrer le début de l'évaluation
+  xapiStore.setUser('Utilisateur', undefined)
+  xapiStore.startedAssessment()
+})
 </script>
