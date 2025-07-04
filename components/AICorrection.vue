@@ -18,7 +18,7 @@
     </UCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as z from 'zod'
 import OpenAI from "openai";
 import { useRuntimeConfig } from '#app'
@@ -40,26 +40,45 @@ const state = reactive({
 const question = ref("Quel est l'utilité de savoir utilisé un ordinateur ? Donne au moins 3 raisons");
 const correction = ref('');
 
-async function correctText() {
-    const response = await client.chat.completions.create({
-        model: "gpt-4.1-nano",
-        temperature: 0,
-        messages: [
-            {
-                role: "system",
-                content: "Tu es un correcteur qui corrige la réponse à la question suivante : " + question.value + 
-                ". Retourne uniquement une note de 0 à 20, formatage comme : 15. Soit objectif dans ta notation." +
-                "La réponse donnée est : " + state.text
+// Expose the correctText function
+const correctText = async (questionText: string, answer: string): Promise<number> => {
+    try {
+        const response = await client.chat.completions.create({
+            model: "gpt-4.1-nano",
+            temperature: 0,
+            messages: [
+                {
+                    role: "system",
+                    content: `Tu es un correcteur qui note la validité de la réponse à la question suivante : ${questionText}. ` +
+                            `Retourne uniquement un nombre entier entre 0 et 20, 0 signifiant que la réponse est incorrecte et 20 signifiant que la réponse est correcte, sans aucun autre texte. ` +
+                            `Sois objectif et strict dans ta notation.`
+                },
+                {
+                    role: "user",
+                    content: answer
+                }
+            ]
+        });
+        
+        const scoreText = response.choices[0]?.message?.content || '0';
+        const score = parseInt(scoreText);
+        return isNaN(score) ? 0 : score;
+    } catch (error) {
+        console.error('Erreur lors de la correction AI:', error);
+        return 0; // En cas d'erreur, considérer comme incorrect
+    }
+};
 
-            },
-            {
-                role: "user",
-                content: state.text
-            }
-        ]
-    });
-    correction.value = response.choices[0]?.message?.content || '';
-}
+// Expose the correctText function
+const correctTextWrapper = async () => {
+    if (!state.text.trim()) return;
+    const score = await correctText(question.value, state.text);
+    correction.value = score.toString();
+};
+
+defineExpose({
+    correctText
+});
 </script>
 
 <style scoped>

@@ -20,6 +20,16 @@ interface XApiVerb {
 }
 
 /**
+ * Interface pour un choix dans une question à choix multiple
+ */
+interface XApiInteractionComponent {
+  id: string
+  description?: {
+    [key: string]: string
+  }
+}
+
+/**
  * Interface pour un objet Object xAPI (l'activité)
  */
 interface XApiObject {
@@ -32,8 +42,14 @@ interface XApiObject {
       [key: string]: string
     }
     type?: string
-    interactionType?: string
+    interactionType?: 'choice' | 'fill-in' | 'matching' | 'performance' | 'sequencing' | 'likert' | 'matching' | 'performance' | 'sequencing' | 'true-false' | 'other'
     correctResponsesPattern?: string[]
+    choices?: XApiInteractionComponent[]
+    scale?: XApiInteractionComponent[]
+    source?: XApiInteractionComponent[]
+    target?: XApiInteractionComponent[]
+    steps?: XApiInteractionComponent[]
+    [key: string]: any
   }
   objectType: string
 }
@@ -163,11 +179,13 @@ export const useXApiStore = defineStore('xapi', {
     },
 
     /**
-     * Génère une déclaration xAPI pour une réponse à une question
+     * Génère une déclaration xAPI pour une réponse à une question QCM
      * @param questionId ID de la question
      * @param questionText Texte de la question
-     * @param selectedOption Option sélectionnée
-     * @param correctOption Option correcte
+     * @param selectedOption Index de l'option sélectionnée
+     * @param selectedText Texte de l'option sélectionnée
+     * @param correctOption Index de l'option correcte
+     * @param correctText Texte de l'option correcte
      * @param isCorrect Si la réponse est correcte
      * @param difficulty Difficulté de la question
      */
@@ -201,41 +219,112 @@ export const useXApiStore = defineStore('xapi', {
               'en-US': questionText,
               'fr-FR': questionText
             },
-            type: 'http://adlnet.gov/expapi/activities/question',
-            interactionType: 'choice'
+            type: 'http://adlnet.gov/expapi/activities/cmi.interaction',
+            interactionType: 'choice',
+            correctResponsesPattern: [correctOption.toString()],
+            choices: [
+              // Les choix seront ajoutés dynamiquement
+            ]
           },
           objectType: 'Activity'
         },
         result: {
-          success: isCorrect,
-          response: selectedText,
           score: {
             scaled: isCorrect ? 1 : 0,
             raw: isCorrect ? 1 : 0,
             min: 0,
             max: 1
           },
+          success: isCorrect,
+          completion: true,
+          response: selectedOption.toString(),
           extensions: {
-            'http://example.com/xapi/difficulty': difficulty,
-            'http://example.com/xapi/selectedOption': selectedOption,
-            'http://example.com/xapi/correctOption': correctOption,
-            'http://example.com/xapi/correctText': correctText
+            'http://id.tincanapi.com/extension/difficulty': difficulty,
+            'http://id.tincanapi.com/extension/answer': selectedText,
+            'http://id.tincanapi.com/extension/correct-answer': correctText,
+            'http://id.tincanapi.com/extension/question-type': 'qcm'
           }
         },
         context: {
           contextActivities: {
-            parent: [
-              {
-                id: this.activityId,
-                definition: {
-                  name: {
-                    'en-US': 'Elo Assessment',
-                    'fr-FR': 'Évaluation Elo'
-                  }
-                },
-                objectType: 'Activity'
-              }
-            ]
+            parent: [{
+              id: this.activityId,
+              objectType: 'Activity'
+            }]
+          },
+          platform: this.platform
+        },
+        timestamp: new Date().toISOString()
+      }
+
+      this.statements.push(statement)
+      return statement
+    },
+
+    /**
+     * Génère une déclaration xAPI pour une réponse à une question à réponse libre
+     * @param questionId ID de la question
+     * @param questionText Texte de la question
+     * @param answer Réponse de l'utilisateur
+     * @param isCorrect Si la réponse est considérée comme correcte
+     * @param difficulty Difficulté de la question
+     */
+    answeredFreeTextQuestion(
+      questionId: number,
+      questionText: string,
+      answer: string,
+      isCorrect: boolean,
+      difficulty: number
+    ) {
+      const statement: XApiStatement = {
+        actor: this.actor,
+        verb: {
+          id: 'http://adlnet.gov/expapi/verbs/answered',
+          display: {
+            'en-US': 'answered',
+            'fr-FR': 'a répondu'
+          }
+        },
+        object: {
+          id: `${this.activityId}/questions/${questionId}`,
+          definition: {
+            name: {
+              'en-US': `Question ${questionId}`,
+              'fr-FR': `Question ${questionId}`
+            },
+            description: {
+              'en-US': questionText,
+              'fr-FR': questionText
+            },
+            type: 'http://adlnet.gov/expapi/activities/cmi.interaction',
+            interactionType: 'fill-in',
+            correctResponsesPattern: [''] // Pas de réponse correcte unique pour les réponses libres
+          },
+          objectType: 'Activity'
+        },
+        result: {
+          score: {
+            scaled: isCorrect ? 1 : 0,
+            raw: isCorrect ? 1 : 0,
+            min: 0,
+            max: 1
+          },
+          success: isCorrect,
+          completion: true,
+          response: answer,
+          extensions: {
+            'http://id.tincanapi.com/extension/difficulty': difficulty,
+            'http://id.tincanapi.com/extension/answer': answer,
+            'http://id.tincanapi.com/extension/question-type': 'free_text',
+            'http://id.tincanapi.com/extension/requires-grading': true
+          }
+        },
+        context: {
+          contextActivities: {
+            parent: [{
+              id: this.activityId,
+              objectType: 'Activity'
+            }]
           },
           platform: this.platform
         },

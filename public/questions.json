@@ -10,7 +10,8 @@
     ],
     "correctAnswer": 2,
     "difficulty": 1,
-    "category": "Géographie"
+    "category": "Français",
+    "type": "qcm"
   },
   {
     "id": 2,
@@ -23,7 +24,8 @@
     ],
     "correctAnswer": 1,
     "difficulty": 1,
-    "category": "Mathématiques"
+    "category": "Informatique",
+    "type": "qcm"
   },
   {
     "id": 3,
@@ -36,7 +38,8 @@
     ],
     "correctAnswer": 2,
     "difficulty": 1,
-    "category": "Sciences"
+    "category": "Français",
+    "type": "qcm"
   },
   {
     "id": 13,
@@ -49,7 +52,8 @@
     ],
     "correctAnswer": 1,
     "difficulty": 5,
-    "category": "Mathématiques"
+    "category": "Français",
+    "type": "qcm"
   },
   {
     "question": "TEST",
@@ -60,6 +64,14 @@
     "correctAnswer": 0,
     "difficulty": 3,
     "category": "Anglais",
-    "id": 14
+    "id": 14,
+    "type": "qcm"
+  },
+  {
+    "question": "Traduit en anglais la phrase suivante:\n\"I'll go to the cinema tonight.\"",
+    "type": "free_text",
+    "difficulty": 3,
+    "category": "Anglais",
+    "id": 15
   }
 ]

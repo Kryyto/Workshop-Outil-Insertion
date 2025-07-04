@@ -56,9 +56,10 @@
             </h2>
           </div>
 
-          <div class="space-y-3">
+          <!-- QCM Question -->
+          <div v-if="currentQuestion?.type === 'qcm'" class="space-y-3">
             <div
-                v-for="(option, index) in currentQuestion?.options"
+                v-for="(option, index) in currentQuestion.options"
                 :key="index"
                 class="group relative"
                 @click="handleOptionClick(index)"
@@ -91,6 +92,41 @@
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Free Text Question -->
+          <div v-else-if="currentQuestion?.type === 'free_text'" class="mt-4">
+            <div class="relative">
+              <textarea
+                  v-model="freeTextAnswer"
+                  class="w-full min-h-[120px] px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  :class="{
+                    'border-emerald-500 bg-emerald-50': isAnswerSubmitted && isFreeTextCorrect,
+                    'border-slate-200': !isAnswerSubmitted
+                  }"
+                  :placeholder="currentQuestion.hint || 'Tapez votre réponse ici...'"
+                  :disabled="isAnswerSubmitted"
+                  @keydown.enter.prevent="handleFreeTextSubmit"
+              ></textarea>
+              <div v-if="isAnswerSubmitted" class="absolute right-3 bottom-3">
+                <div class="w-6 h-6 text-emerald-500">
+                  <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div v-if="isAnswerSubmitted" class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <p class="text-sm text-blue-800">
+                Votre réponse a été enregistrée. Vous pouvez passer à la question suivante.
+              </p>
+              <p v-if="currentQuestion.hint" class="mt-2 text-sm text-blue-700 italic">
+                {{ currentQuestion.hint }}
+              </p>
+            </div>
+            <div v-else class="mt-2 text-sm text-slate-500">
+              Appuyez sur Entrée pour valider votre réponse
             </div>
           </div>
         </div>
@@ -211,7 +247,7 @@
         <div class="bg-slate-50 px-8 py-6 border-t border-slate-200">
           <div class="flex justify-between items-center">
             <div v-if="!isFinished" class="text-sm text-slate-500">
-              Sélectionnez une réponse pour continuer
+              {{ currentQuestion?.type === 'qcm' ? 'Sélectionnez une réponse pour continuer' : 'Tapez votre réponse et appuyez sur Entrée' }}
             </div>
             <div v-else class="text-sm text-slate-500">
               Votre évaluation a été sauvegardée
@@ -221,7 +257,7 @@
               <button
                   v-if="!isFinished"
                   @click="nextQuestion"
-                  :disabled="selectedAnswer === null"
+                  :disabled="currentQuestion?.type === 'qcm' ? selectedAnswer === null : freeTextAnswer.trim() === ''"
                   class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ isLastQuestion ? 'Terminer l\'évaluation' : 'Question suivante' }}
@@ -239,12 +275,23 @@
         </div>
       </div>
     </div>
+    
+    <!-- Composant AICorrection caché -->
+    <div class="hidden">
+      <AICorrection ref="aiCorrectionRef" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// Imports Vue
+import { ref, computed, onMounted } from '#imports'
+
 // Imports Nuxt
 import { useRouter } from 'vue-router'
+
+// Imports des composants
+import AICorrection from '~/components/AICorrection.vue'
 
 // Imports des types et stores
 import { useQuestionStore } from '~/stores/questions'
@@ -261,15 +308,27 @@ const router = useRouter()
 // Récupération des stores
 const questionStore = useQuestionStore()
 const eloStore = useEloStore()
-const xapiStore = useXApiStore()
+const xapiStore = useXApiStore() // xAPI store for tracking learning activities
 
 // Constantes
 const NB_QUESTIONS_MAX = 5
 
+// Référence au composant AICorrection
+const aiCorrectionRef = ref<{ correctText: (question: string, answer: string) => Promise<number> } | null>(null);
+
 // État local
 const currentQuestionIndex = ref(0)
 const selectedAnswer = ref<number | null>(null)
-const answeredQuestions = ref<{questionId: number, correct: boolean, selectedOption: number}[]>([])
+const freeTextAnswer = ref('')
+const isAnswerSubmitted = ref(false)
+const isFreeTextCorrect = ref<boolean | null>(null)
+const answeredQuestions = ref<{
+  questionId: number
+  correct: boolean
+  selectedOption: number | string
+  questionType: 'qcm' | 'free_text'
+  userAnswer?: string
+}[]>([])
 const isFinished = ref(false)
 const xapiData = ref<string>('')
 const showXapiData = ref(false)
@@ -288,45 +347,134 @@ const isLastQuestion = computed(() => currentQuestionIndex.value === NB_QUESTION
 const currentElo = computed(() => eloStore.currentElo)
 const correctAnswersCount = computed(() => answeredQuestions.value.filter((a: {correct: boolean}) => a.correct).length)
 
-// Fonction pour gérer le clic sur une option
+// Fonction pour gérer le clic sur une option QCM
 function handleOptionClick(index: number) {
-  selectedAnswer.value = index
-  console.log('Option sélectionnée:', index)
+  if (currentQuestion.value?.type === 'qcm') {
+    selectedAnswer.value = index
+    console.log('Option sélectionnée:', index)
+  }
+}
+
+
+// Fonction pour gérer la soumission d'une réponse texte
+async function handleFreeTextSubmit() {
+  if (currentQuestion.value?.type === 'free_text' && freeTextAnswer.value.trim()) {
+    isAnswerSubmitted.value = true;
+    
+    try {
+      // Vérifier que la référence au composant est disponible
+      if (!aiCorrectionRef.value) {
+        throw new Error('Composant de correction non disponible');
+      }
+      
+      // Obtenir la note de l'IA via le composant AICorrection
+      const score = await aiCorrectionRef.value.correctText(
+        currentQuestion.value.question,
+        freeTextAnswer.value
+      );
+      
+      // Considérer comme correct si la note est >= 10/20
+      isFreeTextCorrect.value = score >= 10;
+      
+      // Afficher la note à l'utilisateur (optionnel)
+      console.log(`Note AI: ${score}/20`);
+      
+    } catch (error) {
+      console.error('Erreur lors de la correction:', error);
+      isFreeTextCorrect.value = false; // En cas d'erreur, considérer comme incorrect
+    }
+    
+    // Passer à la question suivante après un court délai
+    setTimeout(() => {
+      nextQuestion()
+    }, 1500)
+    
+  } else if (!freeTextAnswer.value.trim()) {
+    // Afficher une alerte si le champ est vide
+    alert('Veuillez saisir une réponse avant de valider.')
+  }
 }
 
 // Fonctions de navigation
 function nextQuestion() {
-  if (selectedAnswer.value !== null && currentQuestion.value) {
-    const question = currentQuestion.value
-    // Vérifier si la réponse est correcte
-    const isCorrect = selectedAnswer.value === question.correctAnswer
-    console.log('Réponse correcte?', isCorrect)
+  const question = currentQuestion.value
+  if (!question) {
+    console.error('Aucune question courante')
+    return
+  }
+  
+  let isCorrect = false
+  let selectedOption: number | string = -1
+  
+  // Vérifier qu'une réponse a été fournie
+  if (question.type === 'qcm') {
+    if (selectedAnswer.value === null) {
+      console.log('Veuillez sélectionner une réponse')
+      return
+    }
+    // Traitement des réponses QCM
+    isCorrect = selectedAnswer.value === question.correctAnswer
+    selectedOption = selectedAnswer.value
     
-    // Mettre à jour le score Elo
+    // Mettre à jour le score Elo uniquement pour les QCM
     eloStore.updateElo(question.difficulty, isCorrect)
+  } else if (question.type === 'free_text') {
+    if (!freeTextAnswer.value.trim() && !isAnswerSubmitted.value) {
+      console.log('Veuillez saisir une réponse')
+      return
+    }
+    // Utiliser le résultat de la correction AI pour déterminer si la réponse est correcte
+    isCorrect = isFreeTextCorrect.value
+    selectedOption = freeTextAnswer.value
+  } else {
+    console.error('Type de question non supporté:', question.type)
+    return
+  }
+  
+  // Enregistrer la réponse
+  const answer = {
+    questionId: question.id,
+    correct: isCorrect,
+    selectedOption,
+    questionType: question.type,
+    userAnswer: question.type === 'free_text' ? freeTextAnswer.value : undefined
+  }
+  
+  answeredQuestions.value.push(answer)
+  
+  // Enregistrer la réponse au format xAPI
+  try {
+    if (question.type === 'qcm') {
+      xapiStore.answeredQuestion(
+        question.id,
+        question.question,
+        selectedOption as number,
+        question.options?.[selectedOption as number] || '',
+        question.correctAnswer || 0,
+        question.options?.[question.correctAnswer || 0] || '',
+        isCorrect,
+        question.difficulty
+      )
+    } else {
+      // Format personnalisé pour les questions à réponse libre
+      xapiStore.answeredFreeTextQuestion(
+        question.id,
+        question.question,
+        freeTextAnswer.value,
+        isCorrect,
+        question.difficulty
+      )
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement xAPI:', error)
+  }
+  
+  // Passer à la question suivante ou terminer
+  if (isLastQuestion.value) {
+    console.log('Toutes les questions ont été répondues')
+    isFinished.value = true
     
-    // Enregistrer la réponse
-    answeredQuestions.value.push({
-      questionId: question.id,
-      correct: isCorrect,
-      selectedOption: selectedAnswer.value
-    })
-    
-    // Enregistrer la réponse au format xAPI
-    xapiStore.answeredQuestion(
-      question.id,
-      question.question,
-      selectedAnswer.value,
-      question.options[selectedAnswer.value],
-      question.correctAnswer,
-      question.options[question.correctAnswer],
-      isCorrect,
-      question.difficulty
-    )
-    
-    // Passer à la question suivante ou terminer
-    if (isLastQuestion.value) {
-      isFinished.value = true
+    try {
       // Enregistrer la fin de l'évaluation au format xAPI
       xapiStore.completedAssessment(
         currentElo.value,
@@ -339,9 +487,31 @@ function nextQuestion() {
       
       // Préparer les données xAPI pour l'affichage
       xapiData.value = xapiStore.exportStatements()
+    } catch (error) {
+      console.error('Erreur lors de la finalisation de l\'évaluation:', error)
+    }
+  } else {
+    // Réinitialiser pour la prochaine question
+    currentQuestionIndex.value++
+    selectedAnswer.value = null
+    freeTextAnswer.value = ''
+    isAnswerSubmitted.value = false
+    isFreeTextCorrect.value = null
+    
+    // Charger la question suivante
+    const nextQuestionId = usedQuestionIds.value[currentQuestionIndex.value]
+    if (nextQuestionId) {
+      const nextQuestion = questionStore.getQuestionById(nextQuestionId)
+      if (nextQuestion) {
+        currentQuestion.value = nextQuestion
+        console.log('Question suivante chargée:', nextQuestion.id)
+      } else {
+        console.error('Impossible de charger la question suivante avec l\'ID:', nextQuestionId)
+        isFinished.value = true // Terminer le quiz en cas d'erreur
+      }
     } else {
-      currentQuestionIndex.value++
-      selectedAnswer.value = null
+      console.error('Aucun ID de question suivant trouvé')
+      isFinished.value = true // Terminer le quiz en cas d'erreur
     }
   }
 }
@@ -352,14 +522,36 @@ function getQuestionText(questionId: number): string {
   return question ? question.question : ''
 }
 
-function getAnswerText(questionId: number, optionIndex: number): string {
+function getAnswerText(questionId: number, optionIndex: number | string): string {
   const question = questionStore.getQuestionById(questionId)
-  return question && question.options[optionIndex] ? question.options[optionIndex] : ''
+  
+  if (!question) return ''
+  
+  // Si c'est une question à réponse libre, retourner directement la réponse
+  if (question.type === 'free_text') {
+    return optionIndex as string || ''
+  }
+  
+  // Pour les QCM, retourner l'option correspondante
+  return question.options && typeof optionIndex === 'number' 
+    ? question.options[optionIndex] 
+    : ''
 }
 
 function getCorrectAnswerText(questionId: number): string {
   const question = questionStore.getQuestionById(questionId)
-  return question ? question.options[question.correctAnswer] : ''
+  
+  if (!question) return ''
+  
+  // Pour les questions à réponse libre, on affiche un message générique
+  if (question.type === 'free_text') {
+    return question.hint || 'Réponse valide attendue';
+  }
+  
+  // Pour les QCM, retourner la réponse correcte
+  return question.options && question.correctAnswer !== undefined 
+    ? question.options[question.correctAnswer] 
+    : ''
 }
 
 function toggleXapiData() {
@@ -381,19 +573,39 @@ function downloadXapiData() {
 }
 
 // Initialisation
-onMounted(() => {
+onMounted(async () => {
   // Initialiser le score Elo
   eloStore.resetElo()
   
-  // Charger les questions
-  questionStore.loadQuestions()
-  
-  // Mélanger et sélectionner les questions uniques dès le début
-  const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
-  usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q: Question) => q.id)
-  
-  // Initialiser le store xAPI et enregistrer le début de l'évaluation
-  xapiStore.setUser('Utilisateur', undefined)
-  xapiStore.startedAssessment()
+  try {
+    // Charger les questions de manière asynchrone
+    await questionStore.loadQuestions()
+    
+    // Vérifier si des questions sont disponibles
+    if (questionStore.questions.length === 0) {
+      console.error('Aucune question disponible')
+      return
+    }
+    
+    // Mélanger et sélectionner les questions uniques
+    const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
+    usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q) => q.id)
+    
+    // S'assurer qu'on a des questions sélectionnées
+    if (usedQuestionIds.value.length === 0) {
+      console.error('Aucune question sélectionnée')
+      return
+    }
+    
+    // Initialiser le store xAPI et enregistrer le début de l'évaluation
+    xapiStore.setUser('Utilisateur', undefined)
+    xapiStore.startedAssessment()
+    
+    // Charger la première question
+    currentQuestion.value = questionStore.getQuestionById(usedQuestionIds.value[0])
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des questions:', error)
+  }
 })
 </script>

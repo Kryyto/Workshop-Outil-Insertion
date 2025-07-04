@@ -34,27 +34,37 @@
         
         <form @submit.prevent="saveQuestion">
           <div class="form-group">
+            <label>Type de question :</label>
+            <select v-model="currentQuestion.type" @change="handleQuestionTypeChange" required>
+              <option value="qcm">QCM (Choix multiples)</option>
+              <option value="free_text">Texte à réponse libre</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>Question :</label>
             <textarea v-model="currentQuestion.question" required></textarea>
           </div>
           
-          <div class="form-group">
-            <label>Options :</label>
-            <div v-for="(option, index) in currentQuestion.options" :key="index" class="option-input">
-              <input v-model="currentQuestion.options[index]" :placeholder="`Option ${index + 1}`" required>
-              <button type="button" @click="removeOption(index)" v-if="currentQuestion.options.length > 2">❌</button>
+          <template v-if="currentQuestion.type === 'qcm'">
+            <div class="form-group">
+              <label>Options :</label>
+              <div v-for="(option, index) in currentQuestion.options" :key="index" class="option-input">
+                <input v-model="currentQuestion.options[index]" :placeholder="`Option ${index + 1}`" required>
+                <button type="button" @click="removeOption(index)" v-if="currentQuestion.options.length > 2">❌</button>
+              </div>
+              <button type="button" @click="addOption" class="btn btn-small">+ Ajouter option</button>
             </div>
-            <button type="button" @click="addOption" class="btn btn-small">+ Ajouter option</button>
-          </div>
-          
-          <div class="form-group">
-            <label>Réponse correcte :</label>
-            <select v-model="currentQuestion.correctAnswer" required>
-              <option v-for="(option, index) in currentQuestion.options" :key="index" :value="index">
-                {{ index + 1 }}. {{ option }}
-              </option>
-            </select>
-          </div>
+            
+            <div class="form-group">
+              <label>Réponse correcte :</label>
+              <select v-model="currentQuestion.correctAnswer" required>
+                <option v-for="(option, index) in currentQuestion.options" :key="index" :value="index">
+                  {{ index + 1 }}. {{ option }}
+                </option>
+              </select>
+            </div>
+          </template>
           
           <div class="form-group">
             <label>Difficulté (1-5) :</label>
@@ -113,12 +123,17 @@
           
           <div class="question-content">
             <h3>{{ question.question }}</h3>
-            <ul class="options-list">
-              <li v-for="(option, index) in question.options" :key="index" 
-                  :class="{ correct: index === question.correctAnswer }">
-                {{ index + 1 }}. {{ option }}
-              </li>
-            </ul>
+            <div v-if="question.type === 'qcm'" class="options-list">
+              <ul>
+                <li v-for="(option, index) in question.options" :key="index" 
+                    :class="{ correct: index === question.correctAnswer }">
+                  {{ index + 1 }}. {{ option }}
+                </li>
+              </ul>
+            </div>
+            <div v-else class="free-text-indicator">
+              <span class="badge">Réponse libre</span>
+            </div>
           </div>
           
           <div class="question-actions">
@@ -148,14 +163,27 @@ import {
   validateQuestion
 } from '~/utils/questionsManager'
 
-interface Question {
+type QuestionType = 'qcm' | 'free_text'
+
+interface QuestionBase {
   id: number
   question: string
-  options: string[]
-  correctAnswer: number
+  type: QuestionType
   difficulty: number
   category: string
 }
+
+interface QCMQuestion extends QuestionBase {
+  type: 'qcm'
+  options: string[]
+  correctAnswer: number
+}
+
+interface FreeTextQuestion extends QuestionBase {
+  type: 'free_text'
+}
+
+type Question = QCMQuestion | FreeTextQuestion
 
 // État réactif
 const questions = ref<Question[]>([])
@@ -169,6 +197,7 @@ const formErrors = ref<string[]>([])
 // Question courante pour le formulaire
 const currentQuestion = ref<Partial<Question>>({
   question: '',
+  type: 'qcm',
   options: ['', ''],
   correctAnswer: 0,
   difficulty: 1,
@@ -212,19 +241,33 @@ const loadFromFile = async () => {
 }
 
 const saveQuestion = async () => {
-  formErrors.value = validateQuestion(currentQuestion.value)
+  // Ensure the question has the correct type
+  const questionToSave = { ...currentQuestion.value }
+  
+  // If it's a free text question, remove QCM-specific fields
+  if (questionToSave.type === 'free_text') {
+    delete questionToSave.options
+    delete questionToSave.correctAnswer
+  }
+  
+  formErrors.value = validateQuestion(questionToSave)
   
   if (formErrors.value.length > 0) {
     return
   }
   
   if (editingQuestion.value) {
-    // Modification
-    const updated = { ...editingQuestion.value, ...currentQuestion.value } as Question
+    // Update existing question
+    const updated = { 
+      ...editingQuestion.value, 
+      ...questionToSave,
+      // Preserve the ID
+      id: editingQuestion.value.id
+    } as Question
     questions.value = updateQuestion(questions.value, updated)
   } else {
-    // Ajout
-    questions.value = addQuestion(questions.value, currentQuestion.value as Omit<Question, 'id'>)
+    // Add new question
+    questions.value = addQuestion(questions.value, questionToSave as Omit<Question, 'id'>)
   }
   
   // Sauvegarder dans le fichier JSON
@@ -242,9 +285,9 @@ const saveQuestion = async () => {
 }
 
 const editQuestion = (question: Question) => {
+  currentQuestion.value = JSON.parse(JSON.stringify(question)) // Deep clone
   editingQuestion.value = question
-  currentQuestion.value = { ...question }
-  showAddForm.value = false
+  showAddForm.value = true
 }
 
 const deleteQuestionConfirm = async (question: Question) => {
@@ -263,11 +306,28 @@ const deleteQuestionConfirm = async (question: Question) => {
   }
 }
 
+const handleQuestionTypeChange = () => {
+  // Reset options when switching to free text
+  if (currentQuestion.value.type === 'free_text') {
+    delete currentQuestion.value.options
+    delete currentQuestion.value.correctAnswer
+  } else {
+    // Ensure we have the required fields for QCM
+    if (!currentQuestion.value.options) {
+      currentQuestion.value.options = ['', '']
+    }
+    if (currentQuestion.value.correctAnswer === undefined) {
+      currentQuestion.value.correctAnswer = 0
+    }
+  }
+}
+
 const cancelForm = () => {
   showAddForm.value = false
   editingQuestion.value = null
   currentQuestion.value = {
     question: '',
+    type: 'qcm',
     options: ['', ''],
     correctAnswer: 0,
     difficulty: 1,
@@ -503,19 +563,33 @@ onMounted(() => {
 .options-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 15px 0;
+  margin: 10px 0;
 }
 
 .options-list li {
-  padding: 5px 0;
-  border-left: 3px solid transparent;
-  padding-left: 10px;
+  padding: 8px;
+  margin: 4px 0;
+  background: #f5f5f5;
+  border-radius: 4px;
 }
 
 .options-list li.correct {
-  border-left-color: #28a745;
-  background: #d4edda;
-  font-weight: bold;
+  background: #e8f5e9;
+  border-left: 3px solid #4caf50;
+}
+
+.free-text-indicator {
+  margin: 10px 0;
+}
+
+.free-text-indicator .badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
 }
 
 .question-actions {

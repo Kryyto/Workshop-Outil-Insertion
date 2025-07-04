@@ -1,11 +1,24 @@
-interface Question {
+type QuestionType = 'qcm' | 'free_text'
+
+interface QuestionBase {
   id: number
   question: string
-  options: string[]
-  correctAnswer: number
+  type: QuestionType
   difficulty: number
   category: string
 }
+
+interface QCMQuestion extends QuestionBase {
+  type: 'qcm'
+  options: string[]
+  correctAnswer: number
+}
+
+interface FreeTextQuestion extends QuestionBase {
+  type: 'free_text'
+}
+
+type Question = QCMQuestion | FreeTextQuestion
 
 // Fonction pour charger les questions depuis le fichier JSON
 export async function loadQuestionsFromFile(): Promise<Question[]> {
@@ -58,9 +71,9 @@ export function loadQuestionsFromStorage(): Question[] {
 }
 
 // Fonction pour ajouter une question
-export function addQuestion(questions: Question[], newQuestion: Omit<Question, 'id'>): Question[] {
+export function addQuestion<T extends Omit<Question, 'id'>>(questions: Question[], newQuestion: T): Question[] {
   const maxId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) : 0
-  const questionWithId = { ...newQuestion, id: maxId + 1 }
+  const questionWithId = { ...newQuestion, id: maxId + 1 } as Question
   return [...questions, questionWithId]
 }
 
@@ -80,20 +93,22 @@ export function exportQuestionsAsJSON(questions: Question[]): string {
 }
 
 // Fonction pour valider une question
-export function validateQuestion(question: Partial<Question>): string[] {
+export function validateQuestion(question: Partial<Question> | (Omit<Partial<QCMQuestion>, 'type'> & { type?: QuestionType })): string[] {
   const errors: string[] = []
   
   if (!question.question || question.question.trim() === '') {
     errors.push('La question est obligatoire')
   }
   
-  if (!question.options || question.options.length < 2) {
-    errors.push('Au moins 2 options sont requises')
-  }
-  
-  if (question.correctAnswer === undefined || question.correctAnswer < 0 || 
-      (question.options && question.correctAnswer >= question.options.length)) {
-    errors.push('La réponse correcte doit être un index valide des options')
+  if (question.type === 'qcm') {
+    if (!question.options || question.options.length < 2) {
+      errors.push('Au moins 2 options sont requises pour un QCM')
+    }
+    
+    if (question.correctAnswer === undefined || question.correctAnswer < 0 || 
+        (question.options && question.correctAnswer >= question.options.length)) {
+      errors.push('La réponse correcte doit être un index valide des options')
+    }
   }
   
   if (!question.difficulty || question.difficulty < 1 || question.difficulty > 5) {

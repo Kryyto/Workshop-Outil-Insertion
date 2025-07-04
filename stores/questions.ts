@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
+import { loadQuestionsFromFile, loadQuestionsFromStorage } from '~/utils/questionsManager'
 
 // Type pour les questions
-export interface Question {
+type Question = {
   id: number
+  type: 'qcm' | 'free_text'
   question: string
-  options: string[]
-  correctAnswer: number
-  difficulty: number // 1-5 (facile à très difficile)
+  options?: string[]
+  correctAnswer?: number
+  difficulty: number
   category: string
 }
 
@@ -24,181 +26,113 @@ export const useQuestionStore = defineStore('questions', {
 
   actions: {
     /**
-     * Charge toutes les questions disponibles
+     * Charge toutes les questions disponibles depuis le fichier JSON ou le localStorage
      */
-    loadQuestions() {
-      // Simuler le chargement des questions
-      this.questions = [
-        // Niveau 1 - Très facile
-        {
-          id: 1,
-          question: "Quelle est la capitale de la France ?",
-          options: ["Berlin", "Londres", "Paris", "Madrid"],
-          correctAnswer: 2,
-          difficulty: 1,
-          category: "Géographie"
-        },
-        {
-          id: 2,
-          question: "Comment s'appelle le verbe à l'infinitif dans la phrase : 'Je mange une pomme' ?",
-          options: ["Manger", "Mange", "Mangeons", "Mangé"],
-          correctAnswer: 0,
-          difficulty: 1,
-          category: "Français"
-        },
-        {
-          id: 3,
-          question: "Which of these is a greeting in English?",
-          options: ["Hello", "Goodbye", "See you", "Thanks"],
-          correctAnswer: 0,
-          difficulty: 1,
-          category: "Anglais"
-        },
+    async loadQuestions() {
+      try {
+        // D'abord essayer de charger depuis le fichier JSON
+        let loadedQuestions = await loadQuestionsFromFile()
+        
+        // Si pas de questions dans le fichier, essayer le localStorage
+        if (loadedQuestions.length === 0) {
+          loadedQuestions = loadQuestionsFromStorage()
+        }
+        
+        // Mettre à jour le store avec les questions chargées
+        this.questions = loadedQuestions
+      } catch (error) {
+        console.error('Erreur lors du chargement des questions:', error)
+        this.questions = []
+      }
 
-        // Niveau 2 - Facile
-        {
-          id: 4,
-          question: "Quel est le synonyme du mot 'heureux' ?",
-          options: ["Triste", "Content", "Mécontent", "Fatigué"],
-          correctAnswer: 1,
-          difficulty: 2,
-          category: "Français"
-        },
-        {
-          id: 5,
-          question: "What is the English translation of 'Je suis fatigué'?",
-          options: ["I am tired", "I am happy", "I am sad", "I am sick"],
-          correctAnswer: 0,
-          difficulty: 2,
-          category: "Anglais"
-        },
-        {
-          id: 6,
-          question: "Quel est le raccourci clavier pour copier dans un document ?",
-          options: ["Ctrl + P", "Ctrl + C", "Ctrl + V", "Ctrl + X"],
-          correctAnswer: 1,
-          difficulty: 2,
-          category: "Informatique"
-        },
-
-        // Niveau 3 - Moyen
-        {
-          id: 7,
-          question: "Quel est l'antonyme du mot 'dur' ?",
-          options: ["Solide", "Mou", "Rugueux", "Épais"],
-          correctAnswer: 1,
-          difficulty: 3,
-          category: "Français"
-        },
-        {
-          id: 8,
-          question: "How do you say 'I love you' in French?",
-          options: ["Je t'aime", "Je suis content", "Je suis fatigué", "Je mange"],
-          correctAnswer: 0,
-          difficulty: 3,
-          category: "Anglais"
-        },
-        {
-          id: 9,
-          question: "Dans Microsoft Word, quelle option utiliseriez-vous pour modifier la taille de la police ?",
-          options: ["Home", "Insert", "Page Layout", "Review"],
-          correctAnswer: 0,
-          difficulty: 3,
-          category: "Informatique"
-        },
-
-        // Niveau 4 - Difficile
-        {
-          id: 10,
-          question: "What is the plural of 'child' in English?",
-          options: ["Children", "Childes", "Childer", "Childs"],
-          correctAnswer: 0,
-          difficulty: 4,
-          category: "Anglais"
-        },
-        {
-          id: 11,
-          question: "Conjuguez le verbe 'avoir' au présent pour la 1ère personne du pluriel.",
-          options: ["Nous avons", "Nous avez", "Nous ont", "Nous avoir"],
-          correctAnswer: 0,
-          difficulty: 4,
-          category: "Français"
-        },
-        {
-          id: 12,
-          question: "Quel est le raccourci clavier pour coller dans un document ?",
-          options: ["Ctrl + P", "Ctrl + C", "Ctrl + V", "Ctrl + X"],
-          correctAnswer: 2,
-          difficulty: 4,
-          category: "Informatique"
-        },
-
-        // Niveau 5 - Très difficile
-        {
-          id: 13,
-          question: "Quelle est la fonction du subjonctif dans la phrase : 'Il faut que tu sois là' ?",
-          options: ["Exprimer un souhait", "Exprimer une obligation", "Exprimer une certitude", "Exprimer une réalité"],
-          correctAnswer: 1,
-          difficulty: 5,
-          category: "Français"
-        },
-        {
-          id: 14,
-          question: "Which of these sentences is correct in English?",
-          options: ["He don't like pizza", "He doesn't likes pizza", "He doesn't like pizza", "He don't likes pizza"],
-          correctAnswer: 2,
-          difficulty: 5,
-          category: "Anglais"
-        },
-        {
-          id: 15,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 0,
-          difficulty: 5,
-          category: "Informatique"
-        },
-        {
-          id: 16,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour calculer la moyenne d'une plage de cellules?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 1,
-          difficulty: 5,
-          category: "Informatique"
-        },
-        {
-          id: 17,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour compter le nombre de cellules non vides?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 2,
-          difficulty: 5,
-          category: "Informatique"
-        },
-        {
-          id: 18,
-          question: "Dans Excel, quelle fonction utiliseriez-vous pour rechercher une valeur dans un tableau?",
-          options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
-          correctAnswer: 3,
-          difficulty: 5,
-          category: "Informatique"
-        },
-        {
-          id: 19,
-          question: "Quel est le complément d'objet direct dans la phrase : 'Marie mange une pomme' ?",
-          options: ["Marie", "mange", "une pomme", "Il n'y en a pas"],
-          correctAnswer: 2,
-          difficulty: 5,
-          category: "Français"
-        },
-        {
-          id: 20,
-          question: "What is the past participle of 'to write' in English?",
-          options: ["Wrote", "Written", "Writing", "Writes"],
-          correctAnswer: 1,
-          difficulty: 5,
-          category: "Anglais"
-        },
-      ]
+      // Si aucune question n'est chargée, utiliser des questions par défaut
+      if (this.questions.length === 0) {
+        console.warn('Aucune question trouvée, utilisation des questions par défaut')
+        this.questions = [
+          // Niveau 1 - Très facile
+          {
+            id: 1,
+            type: 'qcm',
+            question: "Quelle est la capitale de la France ?",
+            options: ["Berlin", "Londres", "Paris", "Madrid"],
+            correctAnswer: 2,
+            difficulty: 1,
+            category: "Géographie"
+          },
+          // Free text question example 1
+          {
+            id: 2,
+            type: 'free_text',
+            question: "Décrivez votre expérience professionnelle en quelques phrases.",
+            difficulty: 2,
+            category: "Professionnel",
+            hint: "Parlez de vos rôles précédents et de vos compétences clés."
+          },
+          {
+            id: 3,
+            type: 'qcm',
+            question: "Comment s'appelle le verbe à l'infinitif dans la phrase : 'Je mange une pomme' ?",
+            options: ["Manger", "Mange", "Mangeons", "Mangé"],
+            correctAnswer: 0,
+            difficulty: 1,
+            category: "Français"
+          },
+          // Free text question example 2
+          {
+            id: 4,
+            type: 'free_text',
+            question: "Quelles sont vos principales motivations pour ce poste ?",
+            difficulty: 3,
+            category: "Motivation",
+            hint: "Mentionnez vos intérêts et objectifs professionnels."
+          },
+          {
+            id: 5,
+            type: 'qcm',
+            question: "Which of these is a greeting in English?",
+            options: ["Hello", "Goodbye", "See you", "Thanks"],
+            correctAnswer: 0,
+            difficulty: 1,
+            category: "Anglais"
+          },
+          // Niveau 5 - Très difficile
+          {
+            id: 13,
+            type: 'qcm',
+            question: "Quelle est la fonction du subjonctif dans la phrase : 'Il faut que tu sois là' ?",
+            options: ["Exprimer un souhait", "Exprimer une obligation", "Exprimer une certitude", "Exprimer une réalité"],
+            correctAnswer: 1,
+            difficulty: 5,
+            category: "Français"
+          },
+          // Free text question example 3
+          {
+            id: 14,
+            type: 'free_text',
+            question: "Décrivez une situation où vous avez dû résoudre un problème complexe.",
+            difficulty: 4,
+            category: "Compétences",
+            hint: "Expliquez le problème, vos actions et le résultat obtenu."
+          },
+          {
+            id: 15,
+            type: 'qcm',
+            question: "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+            options: ["SUM", "AVERAGE", "COUNT", "VLOOKUP"],
+            correctAnswer: 0,
+            difficulty: 5,
+            category: "Informatique"
+          },
+          // Exemple de question à réponse libre
+          {
+            id: 100,
+            type: 'free_text',
+            question: "Décrivez votre expérience avec les outils bureautiques en quelques phrases.",
+            difficulty: 3,
+            category: "Informatique"
+          }
+        ]
+      }
 
       // Sélectionner 5 questions aléatoires pour le questionnaire
       // Initialiser la difficulté et les questions utilisées
@@ -274,14 +208,31 @@ export const useQuestionStore = defineStore('questions', {
 
     /**
      * Sélectionne une question aléatoire d'une difficulté donnée, en évitant les doublons
+     * Par défaut, ne renvoie que des QCM (pour la compatibilité avec le code existant)
      */
-    getRandomQuestionByDifficulty(difficulty: number): Question | null {
-      const pool = this.questions.filter(
-          (q: Question) => q.difficulty === difficulty && !this.usedQuestionIds.includes(q.id)
-      )
-      if (pool.length === 0) return null
-      const idx = Math.floor(Math.random() * pool.length)
-      return pool[idx]
+    getRandomQuestionByDifficulty(difficulty: number, questionType: 'qcm' | 'free_text' | 'all' = 'qcm'): Question | null {
+      // Filtrer les questions par difficulté et non utilisées
+      let availableQuestions = this.questions.filter((q: Question) => {
+        const matchesDifficulty = q.difficulty === difficulty
+        const notUsed = !this.usedQuestionIds.includes(q.id)
+        return matchesDifficulty && notUsed
+      })
+
+      // Si on demande un type spécifique, filtrer par type
+      if (questionType !== 'all') {
+        availableQuestions = availableQuestions.filter((q: Question) => q.type === questionType)
+      }
+
+      if (availableQuestions.length === 0) return null
+      const idx = Math.floor(Math.random() * availableQuestions.length)
+      return availableQuestions[idx]
+    },
+
+    /**
+     * Filtre les questions pour ne garder que les QCM (utile pour les questions qui nécessitent des options)
+     */
+    getQCMQuestions() {
+      return this.questions.filter((q: Question) => q.type === 'qcm')
     },
 
     /**
