@@ -172,7 +172,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
 import { useGapTextStore } from '~/stores/gaptext'
 
 // Récupération du store

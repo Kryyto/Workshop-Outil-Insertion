@@ -171,7 +171,7 @@ export const useGapTextStore = defineStore('gaptext', {
      * Vérifie si toutes les réponses ont été remplies
      */
     allAnswersFilled(): boolean {
-      return this.userAnswers.every(answer => answer.trim() !== '')
+      return this.userAnswers.every((answer: string) => answer.trim() !== '')
     },
     
     /**
