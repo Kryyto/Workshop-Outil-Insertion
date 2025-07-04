@@ -264,7 +264,7 @@ const eloStore = useEloStore()
 const xapiStore = useXApiStore()
 
 // Constantes
-const NB_QUESTIONS_MAX = 5
+const NB_QUESTIONS_MAX = 10
 
 // État local
 const currentQuestionIndex = ref(0)
