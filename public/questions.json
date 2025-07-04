@@ -15,56 +15,16 @@
   },
   {
     "id": 2,
-    "question": "Combien font 2 + 2 ?",
+    "question": "Quel est le verbe à l'infinitif dans la phrase : 'Je mange une pomme' ?",
     "options": [
-      "3",
-      "4",
-      "5",
-      "6"
-    ],
-    "correctAnswer": 1,
-    "difficulty": 1,
-    "category": "Informatique",
-    "type": "qcm"
-  },
-  {
-    "id": 3,
-    "question": "Quelle couleur obtient-on en mélangeant le bleu et le jaune ?",
-    "options": [
-      "Rouge",
-      "Orange",
-      "Vert",
-      "Violet"
-    ],
-    "correctAnswer": 2,
-    "difficulty": 1,
-    "category": "Français",
-    "type": "qcm"
-  },
-  {
-    "id": 13,
-    "question": "Quel est le théorème qui stipule qu'il n'existe pas d'ensemble de tous les ensembles ?",
-    "options": [
-      "Théorème de Gödel",
-      "Paradoxe de Russell",
-      "Théorème de Cantor",
-      "Axiome de Zermelo"
-    ],
-    "correctAnswer": 1,
-    "difficulty": 5,
-    "category": "Français",
-    "type": "qcm"
-  },
-  {
-    "question": "TEST",
-    "options": [
-      "MOI",
-      "TOI"
+      "Manger",
+      "Mange",
+      "Mangeons",
+      "Mangé"
     ],
     "correctAnswer": 0,
-    "difficulty": 3,
-    "category": "Anglais",
-    "id": 14,
+    "difficulty": 1,
+    "category": "Français",
     "type": "qcm"
   },
   {
@@ -73,5 +33,390 @@
     "difficulty": 3,
     "category": "Anglais",
     "id": 15
-  }
+  },
+  {
+    "question": "Which of these is a greeting in English?",
+    "type": "qcm",
+    "options": [
+      "Hello",
+      "Thanks",
+      "Goodbye",
+      "See you"
+    ],
+    "correctAnswer": 0,
+    "difficulty": 1,
+    "category": "Anglais",
+    "id": 16
+  },
+  {
+    "question": "Quel est le synonyme du mot 'heureux' ?",
+    "type": "qcm",
+    "options": [
+      "Triste",
+      "Content",
+      "Mécontent",
+      "Fatigué"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 2,
+    "category": "Français",
+    "id": 17
+  },
+  {
+    "question": "What is the English translation of 'Je suis fatigué'?",
+    "type": "qcm",
+    "options": [
+      "I am sad",
+      "I am happy",
+      "I am content",
+      "I am tired"
+    ],
+    "correctAnswer": 3,
+    "difficulty": 2,
+    "category": "Anglais",
+    "id": 18
+  },
+  {
+    "question": "Quel est le raccourci clavier pour copier dans un document ?",
+    "type": "qcm",
+    "options": [
+      "Ctrl + C",
+      "Ctrl + V",
+      "Ctrl + X",
+      "Ctrl + Z"
+    ],
+    "correctAnswer": 0,
+    "difficulty": 2,
+    "category": "Informatique",
+    "id": 19
+  },
+  {
+    "question": "Quel est l'antonyme du mot 'dur' ?",
+    "type": "qcm",
+    "options": [
+      "Solide",
+      "Rugueux",
+      "Mou",
+      "Épais"
+    ],
+    "correctAnswer": 2,
+    "difficulty": 3,
+    "category": "Français",
+    "id": 20
+  },
+  {
+    "question": "What is the French translation of 'I love you'?",
+    "type": "qcm",
+    "options": [
+      "Je t'aime",
+      "Je t'aimerais",
+      "Je te hais",
+      "J'ai faim"
+    ],
+    "correctAnswer": 0,
+    "difficulty": 3,
+    "category": "Anglais",
+    "id": 21
+  },
+  {
+    "question": "Dans Microsoft Word, quelle option utiliseriez-vous pour modifier la taille de la police ?",
+    "type": "qcm",
+    "options": [
+      "Home",
+      "Insert",
+      "Page Layout",
+      "Review"
+    ],
+    "correctAnswer": 0,
+    "difficulty": 3,
+    "category": "Informatique",
+    "id": 22
+  },
+  {
+    "question": "What is the plural of 'child' in English?",
+    "type": "qcm",
+    "options": [
+      "Childes",
+      "Children",
+      "Childer",
+      "Childs"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 4,
+    "category": "Anglais",
+    "id": 23
+  },
+  {
+    "question": "Conjuguez le verbe 'avoir' au présent pour la 1ère personne du pluriel.",
+    "type": "qcm",
+    "options": [
+      "avons",
+      "avez",
+      "avons",
+      "avons"
+    ],
+    "correctAnswer": 2,
+    "difficulty": 4,
+    "category": "Français",
+    "id": 24
+  },
+  {
+    "question": "Quel est le raccourci clavier pour coller dans un document ?",
+    "type": "qcm",
+    "options": [
+      "Ctrl + C",
+      "Ctrl + V",
+      "Ctrl + X",
+      "Ctrl + Z"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 4,
+    "category": "Informatique",
+    "id": 25
+  },
+  {
+    "question": "Quelle est la fonction du subjonctif dans la phrase : 'Il faut que tu sois là' ?",
+    "type": "qcm",
+    "options": [
+      "Exprimer un souhait",
+      "Exprimer une obligation",
+      "Exprimer une certitude",
+      "Exprimer une réalité"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 5,
+    "category": "Français",
+    "id": 26
+  },
+  {
+    "question": "Which of these sentences is correct in English?",
+    "type": "qcm",
+    "options": [
+      "He don't like pizza",
+      "He doesn't likes pizza",
+      "He doesn't like pizza",
+      "He don't likes pizza"
+    ],
+    "correctAnswer": 2,
+    "difficulty": 5,
+    "category": "Anglais",
+    "id": 27
+  },
+  {
+    "question": "Dans Excel, quelle fonction utiliseriez-vous pour trouver la somme d'une plage de cellules?",
+    "type": "qcm",
+    "options": [
+      "SUM",
+      "AVERAGE",
+      "COUNT",
+      "VLOOKUP"
+    ],
+    "correctAnswer": 0,
+    "difficulty": 5,
+    "category": "Informatique",
+    "id": 28
+  },
+  {
+    "question": "Dans Excel, quelle fonction utiliseriez-vous pour calculer la moyenne d'une plage de cellules?",
+    "type": "qcm",
+    "options": [
+      "SUM",
+      "AVERAGE",
+      "COUNT",
+      "VLOOKUP"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 5,
+    "category": "Informatique",
+    "id": 29
+  },
+  {
+    "question": "Dans Excel, quelle fonction utiliseriez-vous pour compter le nombre de cellules non vides?",
+    "type": "qcm",
+    "options": [
+      "SUM",
+      "AVERAGE",
+      "COUNT",
+      "VLOOKUP"
+    ],
+    "correctAnswer": 2,
+    "difficulty": 5,
+    "category": "Informatique",
+    "id": 30
+  },
+  {
+    "question": "Dans Excel, quelle fonction utiliseriez-vous pour rechercher une valeur dans un tableau?",
+    "type": "qcm",
+    "options": [
+      "SUM",
+      "AVERAGE",
+      "COUNT",
+      "VLOOKUP"
+    ],
+    "correctAnswer": 3,
+    "difficulty": 5,
+    "category": "Informatique",
+    "id": 31
+  },
+  {
+    "question": "Quel est le complément d'objet direct dans la phrase : 'Marie mange une pomme' ?",
+    "type": "qcm",
+    "options": [
+      "Marie",
+      "mange",
+      "une pomme",
+      "Il n'y en a pas"
+    ],
+    "correctAnswer": 2,
+    "difficulty": 5,
+    "category": "Français",
+    "id": 32
+  },
+  {
+    "question": "What is the past participle of 'to write' in English?",
+    "type": "qcm",
+    "options": [
+      "Wrote",
+      "Written",
+      "Writing",
+      "Writes"
+    ],
+    "correctAnswer": 1,
+    "difficulty": 5,
+    "category": "Anglais",
+    "id": 33
+  },
+  {
+    "question": "Conjugue le verbe 'manger' au présent de l'indicatif, à la 1re personne du singulier.",
+    "type": "free_text",
+    "difficulty": 1,
+    "category": "Français",
+    "id": 1
+  },
+  {
+    "question": "Quel est le pluriel du mot 'cheval' ?",
+    "type": "free_text",
+    "difficulty": 2,
+    "category": "Français",
+    "id": 2
+  },
+  {
+    "question": "Trouve la figure de style dans la phrase suivante : \"Le silence est un cri.\"",
+    "type": "free_text",
+    "difficulty": 3,
+    "category": "Français",
+    "id": 3
+  },
+  {
+    "question": "Analyse grammaticale complète de la phrase : \"Les enfants jouent dans le jardin.\"",
+    "type": "free_text",
+    "difficulty": 4,
+    "category": "Français",
+    "id": 4
+  },
+  {
+    "question": "Rédige un paragraphe argumentatif sur l'importance de la lecture à l'école.",
+    "type": "free_text",
+    "difficulty": 5,
+    "category": "Français",
+    "id": 5
+  },
+  {
+    "question": "Traduire en français : \"I have a cat.\"",
+    "type": "free_text",
+    "difficulty": 1,
+    "category": "Anglais",
+    "id": 6
+  },
+  {
+    "question": "Quel est le prétérit du verbe 'to go' ?",
+    "type": "free_text",
+    "difficulty": 2,
+    "category": "Anglais",
+    "id": 7
+  },
+  {
+    "question": "Corrige cette phrase si besoin : \"He go to school every day.\"",
+    "type": "free_text",
+    "difficulty": 3,
+    "category": "Anglais",
+    "id": 8
+  },
+  {
+    "question": "Explique la différence entre le present perfect et le past simple.",
+    "type": "free_text",
+    "difficulty": 4,
+    "category": "Anglais",
+    "id": 9
+  },
+  {
+    "question": "Rédige une lettre de motivation en anglais pour un job d'été.",
+    "type": "free_text",
+    "difficulty": 5,
+    "category": "Anglais",
+    "id": 10
+  },
+  {
+    "question": "Comment allume-t-on un ordinateur ?",
+    "type": "free_text",
+    "difficulty": 1,
+    "category": "Informatique",
+    "id": 11
+  },
+  {
+    "question": "Cite deux périphériques d'entrée que l'on utilise avec un ordinateur.",
+    "type": "free_text",
+    "difficulty": 1,
+    "category": "Informatique",
+    "id": 12
+  },
+  {
+    "question": "Comment ouvrir un navigateur internet (comme Chrome ou Firefox) ?",
+    "type": "free_text",
+    "difficulty": 2,
+    "category": "Informatique",
+    "id": 13
+  },
+  {
+    "question": "Explique comment envoyer un email avec une pièce jointe.",
+    "type": "free_text",
+    "difficulty": 3,
+    "category": "Informatique",
+    "id": 14
+  },
+  {
+    "question": "À quoi sert un mot de passe et comment le choisir de manière sécurisée ?",
+    "type": "free_text",
+    "difficulty": 3,
+    "category": "Informatique",
+    "id": 15
+  },
+  {
+    "question": "Explique comment faire une recherche simple sur internet (par exemple pour trouver une adresse ou une recette).",
+    "type": "free_text",
+    "difficulty": 2,
+    "category": "Informatique",
+    "id": 16
+  },
+  {
+    "question": "Explique comment créer un document texte avec un logiciel comme Word ou LibreOffice, puis l’enregistrer et le retrouver plus tard.",
+    "type": "free_text",
+    "difficulty": 4,
+    "category": "Informatique",
+    "id": 17
+  },
+  {
+    "question": "Comment remplir un formulaire administratif en ligne (ex. CAF, Pôle emploi) et transmettre un justificatif ?",
+    "type": "free_text",
+    "difficulty": 4,
+    "category": "Informatique",
+    "id": 18
+  },
+  {
+    "question": "Explique comment créer un document texte avec un logiciel comme Word ou LibreOffice, puis l’enregistrer et le retrouver plus tard.",
+    "type": "free_text",
+    "difficulty": 4,
+    "category": "Informatique",
+    "id": 17
+  }  
 ]
