@@ -1,11 +1,17 @@
-// Test script to verify xAPI integration for both question types
+// Script de test pour valider l'intégration et la génération des statements xAPI.
+// Permet de simuler des réponses et de vérifier le format produit.
+//
+// Usage : node test-xapi.js
+//
+// Chaque bloc ci-dessous correspond à un cas de test sur les fonctions xAPI.
+
 import { defineStore } from 'pinia'
 import { useXApiStore } from './stores/xapi.js'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import fs from 'fs'
 
-// Create a test instance of the xAPI store
+// Création d'une instance de test du store xAPI
 const xapiStore = useXApiStore(defineStore)
 
 // Set a test user

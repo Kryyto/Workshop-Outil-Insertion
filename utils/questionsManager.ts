@@ -20,13 +20,25 @@ interface FreeTextQuestion extends QuestionBase {
 
 type Question = QCMQuestion | FreeTextQuestion
 
-// Fonction pour charger les questions depuis le fichier JSON
+/**
+ * Charge les questions depuis un fichier JSON public/questions.json
+ * Retourne une promesse contenant la liste des questions.
+ */
 export async function loadQuestionsFromFile(): Promise<Question[]> {
   try {
+    /**
+     * Effectue une requête GET sur le fichier questions.json pour récupérer les questions.
+     */
     const response = await fetch('/questions.json')
+    /**
+     * Analyse la réponse JSON et retourne la liste des questions.
+     */
     const questions = await response.json()
     return questions
   } catch (error) {
+    /**
+     * Gère les erreurs lors du chargement des questions.
+     */
     console.error('Erreur lors du chargement des questions:', error)
     return []
   }

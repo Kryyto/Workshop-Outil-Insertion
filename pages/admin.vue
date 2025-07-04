@@ -1,4 +1,5 @@
 <template>
+  <!-- Panneau d'administration pour la gestion des questions : ajout, modification, suppression, export. -->
   <div class="admin-container">
     <h1>Administration des Questions</h1>
     

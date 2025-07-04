@@ -22,6 +22,11 @@ bun install
 
 ## Development Server
 
+<!-- 
+Étape 2 : Démarrage du serveur de développement
+Cette étape permet de démarrer le serveur de développement sur l'adresse http://localhost:3000.
+-->
+
 Start the development server on `http://localhost:3000`:
 
 ```bash

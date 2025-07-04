@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { loadQuestionsFromFile, loadQuestionsFromStorage } from '~/utils/questionsManager'
 
 // Type pour les questions
+// Type représentant une question du questionnaire
+// Peut être de type QCM ou texte libre
+// Les options et la bonne réponse sont optionnelles pour les questions à réponse libre
 type Question = {
   id: number
   type: 'qcm' | 'free_text'
@@ -13,20 +16,32 @@ type Question = {
 }
 
 export const useQuestionStore = defineStore('questions', {
-  state: () => ({
-    questions: [] as Question[],
-    currentQuestions: [] as Question[],
-    currentDifficulty: 3, // Commence toujours à la difficulté moyenne
-    usedQuestionIds: [] as number[], // Pour éviter les doublons
+  // État du store Pinia pour la gestion des questions
+state: () => ({
+    // Liste de toutes les questions chargées (depuis le JSON ou le localStorage)
+questions: [] as Question[],
+    // Questions actuellement sélectionnées pour le parcours (peut évoluer en mode adaptatif)
+currentQuestions: [] as Question[], // Maintenant utilisé pour stocker les questions générées dynamiquement
+    // Niveau de difficulté courant (utilisé pour l'adaptation du parcours)
+currentDifficulty: 3, // Commence toujours à la difficulté moyenne
+    // IDs des questions déjà posées (évite les doublons)
+usedQuestionIds: [] as number[], // Pour éviter les doublons
+    // IDs des questions générées dans l'ordre du parcours adaptatif
+adaptiveQuestionIds: [] as number[], // NOUVEAU : IDs des questions générées pour le parcours adaptatif
   }),
 
   getters: {
-    totalQuestions: (state) => state.currentQuestions.length,
+    // Retourne le nombre de questions actuellement dans le parcours
+ totalQuestions: (state) => state.currentQuestions.length,
   },
 
   actions: {
     /**
      * Charge toutes les questions disponibles depuis le fichier JSON ou le localStorage
+     */
+        /**
+     * Charge toutes les questions disponibles depuis le fichier JSON ou le localStorage
+     * Met à jour la liste des questions du store.
      */
     async loadQuestions() {
       try {
@@ -151,15 +166,110 @@ export const useQuestionStore = defineStore('questions', {
      * Sélectionne un nombre spécifique de questions aléatoires
      * @param count Nombre de questions à sélectionner
      */
-    selectRandomQuestions(count: number) {
+    /**
+ * Sélectionne un nombre spécifique de questions aléatoires pour un parcours non adaptatif.
+ * La première question est toujours de niveau 3 si possible.
+ */
+selectRandomQuestions(count: number) {
       // S'assurer qu'on ne demande pas plus de questions qu'il n'en existe
       const maxCount = Math.min(count, this.questions.length)
+      // Sélectionner une question de niveau 3 en premier (aléatoire parmi toutes celles de difficulté 3)
+      const niveau3Questions = this.questions.filter((q: Question) => q.difficulty === 3)
+      let first: Question | undefined = undefined
+      if (niveau3Questions.length > 0) {
+        first = niveau3Questions[Math.floor(Math.random() * niveau3Questions.length)]
+      }
+      // Mélanger les questions restantes en excluant celle déjà choisie
+      const remaining = this.questions.filter((q: Question) => !first || q.id !== first.id).sort(() => 0.5 - Math.random())
+      // Construire la liste finale
+      this.currentQuestions = []
+      if (first) {
+        this.currentQuestions.push(first)
+      }
+      this.currentQuestions.push(...remaining.slice(0, maxCount - this.currentQuestions.length))
+    },
+    /**
+ * Initialise le système adaptatif :
+ * - Remet la difficulté à 3
+ * - Vide les historiques
+ * - Sélectionne une première question de difficulté 3
+ */
+initializeAdaptiveSystem() {
+      this.currentDifficulty = 3
+      this.usedQuestionIds = []
+      this.currentQuestions = []
+      this.adaptiveQuestionIds = []
+      
+      // Sélectionner la première question de difficulté 3
+      const firstQuestion = this.getRandomQuestionByDifficulty(3, 'all')
+      if (firstQuestion) {
+        this.currentQuestions.push(firstQuestion)
+        this.usedQuestionIds.push(firstQuestion.id)
+        this.adaptiveQuestionIds.push(firstQuestion.id)
+      }
+    },
+    // 3. Ajouter une méthode pour obtenir l'ID de la question courante
+    /**
+     * Obtient l'ID de la question à l'index spécifié dans le parcours adaptatif
+     */
+    /**
+ * Retourne l'ID de la question à l'index donné dans le parcours adaptatif.
+ */
+getCurrentQuestionId(index: number): number | null {
+      if (index >= 0 && index < this.adaptiveQuestionIds.length) {
+        return this.adaptiveQuestionIds[index]
+      }
+      return null
+    },
 
-      // Copier et mélanger les questions
-      const shuffled = [...this.questions].sort(() => 0.5 - Math.random())
-
-      // Sélectionner le nombre demandé
-      this.currentQuestions = shuffled.slice(0, Math.min(5, maxCount))
+    // 4. Modifier la méthode nextAdaptiveQuestion
+    /**
+     * Ajoute dynamiquement la prochaine question selon la réponse du joueur
+     * @param wasCorrect true si la réponse était correcte
+     */
+    /**
+ * Ajoute dynamiquement la prochaine question selon la réponse de l'utilisateur.
+ * Adapte la difficulté à la hausse ou la baisse selon la réussite.
+ * Ajoute l'ID de la nouvelle question au parcours adaptatif.
+ */
+nextAdaptiveQuestion(wasCorrect: boolean) {
+      // Ajuster la difficulté selon la réponse
+      if (wasCorrect) {
+        this.currentDifficulty = Math.min(5, this.currentDifficulty + 1)
+      } else {
+        this.currentDifficulty = Math.max(1, this.currentDifficulty - 1)
+      }
+      
+      // Essayer de trouver une question de la nouvelle difficulté
+      let nextQuestion = this.getRandomQuestionByDifficulty(this.currentDifficulty, 'all')
+      
+      // Si aucune question de cette difficulté n'est disponible, chercher dans les niveaux adjacents
+      if (!nextQuestion) {
+        for (let offset = 1; offset <= 2; offset++) {
+          // Essayer un niveau plus haut
+          if (this.currentDifficulty + offset <= 5) {
+            nextQuestion = this.getRandomQuestionByDifficulty(this.currentDifficulty + offset, 'all')
+            if (nextQuestion) break
+          }
+          
+          // Essayer un niveau plus bas
+          if (this.currentDifficulty - offset >= 1) {
+            nextQuestion = this.getRandomQuestionByDifficulty(this.currentDifficulty - offset, 'all')
+            if (nextQuestion) break
+          }
+        }
+      }
+      
+      // Si on a trouvé une question, l'ajouter au parcours
+      if (nextQuestion) {
+        this.currentQuestions.push(nextQuestion)
+        this.usedQuestionIds.push(nextQuestion.id)
+        this.adaptiveQuestionIds.push(nextQuestion.id)
+        
+        console.log(`Question suivante ajoutée: ID ${nextQuestion.id}, Difficulté ${nextQuestion.difficulty}`)
+      } else {
+        console.warn('Aucune question disponible pour la difficulté', this.currentDifficulty)
+      }
     },
 
     /**
@@ -191,7 +301,10 @@ export const useQuestionStore = defineStore('questions', {
      * Récupère la question à l'index spécifié
      * @param index Index de la question
      */
-    getCurrentQuestion(index: number): Question | null {
+    /**
+ * Récupère la question à l'index spécifié dans currentQuestions (utile pour l'affichage ou la navigation).
+ */
+getCurrentQuestion(index: number): Question | null {
       if (index >= 0 && index < this.currentQuestions.length) {
         return this.currentQuestions[index]
       }
@@ -210,7 +323,11 @@ export const useQuestionStore = defineStore('questions', {
      * Sélectionne une question aléatoire d'une difficulté donnée, en évitant les doublons
      * Par défaut, ne renvoie que des QCM (pour la compatibilité avec le code existant)
      */
-    getRandomQuestionByDifficulty(difficulty: number, questionType: 'qcm' | 'free_text' | 'all' = 'qcm'): Question | null {
+    /**
+ * Sélectionne une question aléatoire d'une difficulté donnée et d'un type donné.
+ * Évite les doublons grâce à usedQuestionIds.
+ */
+getRandomQuestionByDifficulty(difficulty: number, questionType: 'qcm' | 'free_text' | 'all' = 'qcm'): Question | null {
       // Filtrer les questions par difficulté et non utilisées
       let availableQuestions = this.questions.filter((q: Question) => {
         const matchesDifficulty = q.difficulty === difficulty
@@ -231,33 +348,11 @@ export const useQuestionStore = defineStore('questions', {
     /**
      * Filtre les questions pour ne garder que les QCM (utile pour les questions qui nécessitent des options)
      */
-    getQCMQuestions() {
-      return this.questions.filter((q: Question) => q.type === 'qcm')
-    },
-
     /**
-     * Ajoute dynamiquement la prochaine question selon la réponse du joueur
-     * @param wasCorrect true si la réponse était correcte
-     */
-    nextAdaptiveQuestion(wasCorrect: boolean) {
-      if (wasCorrect) {
-        this.currentDifficulty = Math.min(5, this.currentDifficulty + 1)
-      } else {
-        this.currentDifficulty = Math.max(1, this.currentDifficulty - 1)
-      }
-      let next = this.getRandomQuestionByDifficulty(this.currentDifficulty)
-      if (!next) {
-        for (let offset = 1; offset <= 2; offset++) {
-          next = this.getRandomQuestionByDifficulty(this.currentDifficulty + offset)
-          if (next) break
-          next = this.getRandomQuestionByDifficulty(this.currentDifficulty - offset)
-          if (next) break
-        }
-      }
-      if (next) {
-        this.currentQuestions.push(next)
-        this.usedQuestionIds.push(next.id)
-      }
+ * Filtre les questions pour ne garder que les QCM (utile pour les questions qui nécessitent des options).
+ */
+getQCMQuestions() {
+      return this.questions.filter((q: Question) => q.type === 'qcm')
     }
   }
 })

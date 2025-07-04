@@ -284,6 +284,8 @@
 </template>
 
 <script setup lang="ts">
+// Ce composant Vue gère le questionnaire adaptatif pour l'évaluation des compétences.
+// Il utilise Pinia pour la gestion d'état et propose un parcours de questions adaptatif selon les réponses de l'utilisateur.
 // Imports Vue
 import { ref, computed, onMounted } from '#imports'
 
@@ -461,7 +463,6 @@ function nextQuestion() {
         question.difficulty
       )
     } else {
-      // Format personnalisé pour les questions à réponse libre
       xapiStore.answeredFreeTextQuestion(
         question.id,
         question.question,
@@ -496,27 +497,37 @@ function nextQuestion() {
       console.error('Erreur lors de la finalisation de l\'évaluation:', error)
     }
   } else {
-    // Réinitialiser pour la prochaine question
-    currentQuestionIndex.value++
-    selectedAnswer.value = null
-    freeTextAnswer.value = ''
-    isAnswerSubmitted.value = false
-    isFreeTextCorrect.value = null
+    // MODIFICATION PRINCIPALE : Utiliser l'algorithme adaptatif
+    // Générer la prochaine question basée sur la réponse actuelle
+    questionStore.nextAdaptiveQuestion(isCorrect)
     
-    // Charger la question suivante
-    const nextQuestionId = usedQuestionIds.value[currentQuestionIndex.value]
+    // Passer à la question suivante
+    currentQuestionIndex.value++
+    
+    // Obtenir la nouvelle question générée
+    const nextQuestionId = questionStore.getCurrentQuestionId(currentQuestionIndex.value)
     if (nextQuestionId) {
       const nextQuestion = questionStore.getQuestionById(nextQuestionId)
       if (nextQuestion) {
-        currentQuestion.value = nextQuestion
-        console.log('Question suivante chargée:', nextQuestion.id)
+        // Ajouter l'ID à la liste des questions utilisées
+        if (!usedQuestionIds.value.includes(nextQuestionId)) {
+          usedQuestionIds.value.push(nextQuestionId)
+        }
+        
+        // Réinitialiser pour la prochaine question
+        selectedAnswer.value = null
+        freeTextAnswer.value = ''
+        isAnswerSubmitted.value = false
+        isFreeTextCorrect.value = null
+        
+        console.log('Question suivante chargée:', nextQuestion.id, 'Difficulté:', nextQuestion.difficulty)
       } else {
         console.error('Impossible de charger la question suivante avec l\'ID:', nextQuestionId)
-        isFinished.value = true // Terminer le quiz en cas d'erreur
+        isFinished.value = true
       }
     } else {
-      console.error('Aucun ID de question suivant trouvé')
-      isFinished.value = true // Terminer le quiz en cas d'erreur
+      console.error('Aucune question suivante disponible')
+      isFinished.value = true
     }
   }
 }
@@ -592,22 +603,22 @@ onMounted(async () => {
       return
     }
     
-    // Mélanger et sélectionner les questions uniques
-    const shuffled = [...questionStore.questions].sort(() => 0.5 - Math.random())
-    usedQuestionIds.value = shuffled.slice(0, NB_QUESTIONS_MAX).map((q) => q.id)
+    // MODIFICATION : Initialiser le système adaptatif au lieu de sélectionner toutes les questions
+    questionStore.initializeAdaptiveSystem()
     
-    // S'assurer qu'on a des questions sélectionnées
-    if (usedQuestionIds.value.length === 0) {
-      console.error('Aucune question sélectionnée')
+    // Obtenir la première question (toujours de difficulté 3)
+    const firstQuestionId = questionStore.getCurrentQuestionId(0)
+    if (firstQuestionId) {
+      usedQuestionIds.value = [firstQuestionId]
+      currentQuestion.value = questionStore.getQuestionById(firstQuestionId)
+    } else {
+      console.error('Impossible de charger la première question')
       return
     }
     
     // Initialiser le store xAPI et enregistrer le début de l'évaluation
     xapiStore.setUser('Utilisateur', undefined)
     xapiStore.startedAssessment()
-    
-    // Charger la première question
-    currentQuestion.value = questionStore.getQuestionById(usedQuestionIds.value[0])
     
   } catch (error) {
     console.error('Erreur lors du chargement des questions:', error)

@@ -1,4 +1,5 @@
 <template>
+  <!-- Composant racine de l'application Nuxt. Tous les composants enfants y sont injectés via <NuxtPage />. -->
   <div class="min-h-screen bg-gray-50">
     <UContainer class="py-8">
       <NuxtLayout>

@@ -1,4 +1,5 @@
 <template>
+  <!-- Composant d'intégration de la correction IA pour les réponses libres. -->
     <h1>Page de correction</h1>
     <UCard>
         <UForm :schema="schema" :state="state" class="space-y-4 border border-gray-200 p-4 rounded" @submit="correctText">

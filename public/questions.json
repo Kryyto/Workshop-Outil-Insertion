@@ -28,7 +28,7 @@
     "type": "qcm"
   },
   {
-    "question": "Traduit en anglais la phrase suivante:\n\"I'll go to the cinema tonight.\"",
+    "question": "Traduit en français la phrase suivante:\n\"I'll go to the cinema tonight.\"",
     "type": "free_text",
     "difficulty": 3,
     "category": "Anglais",
@@ -150,10 +150,10 @@
     "question": "Conjuguez le verbe 'avoir' au présent pour la 1ère personne du pluriel.",
     "type": "qcm",
     "options": [
-      "avons",
+      "a",
       "avez",
       "avons",
-      "avons"
+      "eus"
     ],
     "correctAnswer": 2,
     "difficulty": 4,

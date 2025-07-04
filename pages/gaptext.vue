@@ -1,4 +1,5 @@
 <template>
+  <!-- Page d'exercice de texte à trous. Utilise le store gaptextStore pour gérer les questions et réponses utilisateur. -->
   <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header Card -->
