@@ -8,7 +8,7 @@ COURTET Tom, CERVASI Ewen, FUMA Jordan, DUQUAIRE Mathieu
 
 - **Questionnaires adaptatifs** avec ajustement dynamique de la difficulté
 - **Système de notation Elo** pour un suivi précis des compétences
-- **Questions à texte lacunaire** (Gap Text) avec IA intégrée
+- **Questions à réponses ouvertes** (Free Text) avec IA intégrée
 - **Interface d'administration** pour la gestion des questions
 - **Support multi-formats** : QCM et réponses libres
 
