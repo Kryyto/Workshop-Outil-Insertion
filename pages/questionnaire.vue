@@ -376,6 +376,11 @@ async function handleFreeTextSubmit() {
       // Considérer comme correct si la note est >= 10/20
       isFreeTextCorrect.value = score >= 10;
       
+      // Mettre à jour le score Elo pour les questions à réponse libre
+      if (currentQuestion.value) {
+        eloStore.updateElo(currentQuestion.value.difficulty, isFreeTextCorrect.value);
+      }
+      
       // Afficher la note à l'utilisateur (optionnel)
       console.log(`Note AI: ${score}/20`);
       
